@@ -12,7 +12,7 @@ const EscrowTransactions = artifacts.require("EscrowTransactions");
 (9) 0xd08f6d0571125c6f7ec137473c1cb80aee4306ea */
 contract("EscrowTransactions", (accounts) => {
   it("should create a new escrow transactions with correct values", async () => {
-    const escrowTransactionsInstance = await EscrowTransactions.deployed();
+    const escrowTransactionsInstance = await EscrowTransactions.new();
     const presaleAddress = "0x0000000000000000000000000000000000000123";
     const seller = accounts[0];
     const buyersWalletToAdd = accounts[1];
@@ -32,13 +32,13 @@ contract("EscrowTransactions", (accounts) => {
     );
 
     /*struct SaleInfo {
-    bool buyerAcceptedSaleAndSentBnbToContract;
-    bool cancelled;
-    bool walletAdded;
-    string presalePlatform;
-    bool moneySentToSellerByContract;
-    uint256 price;
-} */
+      bool buyerAcceptedSaleAndSentBnbToContract;
+      bool cancelled;
+      bool walletAdded;
+      string presalePlatform;
+      bool moneySentToSellerByContract;
+      uint256 price;
+  } */
     assert.equal(sale.price, price, "Sale price is not correct");
     assert.equal(
       sale.presalePlatform,
@@ -60,7 +60,7 @@ contract("EscrowTransactions", (accounts) => {
   });
 
   it("should let a buyer accept a sale, set the correct values and transfer BNB from the buyer to the contract", async () => {
-    const escrowTransactionsInstance = await EscrowTransactions.deployed();
+    const escrowTransactionsInstance = await EscrowTransactions.new();
     const presaleAddress = "0x0000000000000000000000000000000000000123";
     const seller = accounts[0];
     const buyersWalletToAdd = accounts[1];
@@ -110,7 +110,7 @@ contract("EscrowTransactions", (accounts) => {
   });
 
   it("should let a seller complete sale (I will do that), and transfer correct BNB from contract and send to the seller", async () => {
-    const escrowTransactionsInstance = await EscrowTransactions.deployed();
+    const escrowTransactionsInstance = await EscrowTransactions.new();
     const presaleAddress = "0x0000000000000000000000000000000000000123";
     const seller = accounts[0];
     const buyersWalletToAdd = accounts[1];
@@ -173,7 +173,7 @@ contract("EscrowTransactions", (accounts) => {
   });
 
   it("should let a seller cancel a sale, and transfer correct BNB from contract and send to the buyer", async () => {
-    const escrowTransactionsInstance = await EscrowTransactions.deployed();
+    const escrowTransactionsInstance = await EscrowTransactions.new();
     const presaleAddress = "0x0000000000000000000000000000000000000123";
     const seller = accounts[0];
     const buyersWalletToAdd = accounts[1];
@@ -246,9 +246,9 @@ contract("EscrowTransactions", (accounts) => {
   });
 
   it("should return the sales for a seller", async () => {
-    const escrowTransactionsInstance = await EscrowTransactions.deployed();
+    const escrowTransactionsInstance = await EscrowTransactions.new();
     const presaleAddress = "0x0000000000000000000000000000000000000123";
-    const seller = accounts[3];
+    const seller = accounts[0];
     const buyersWalletToAdd = accounts[1];
     const price = "1000000000000000000"; // 1bnb
 
@@ -259,7 +259,7 @@ contract("EscrowTransactions", (accounts) => {
       { from: seller }
     );
 
-    await debug(escrowTransactionsInstance.getSalesForSeller(seller));
+    const sales = await escrowTransactionsInstance.getSalesForSeller(seller);
 
     assert.equal(sales.length, 1, "There should be 1 sale for the seller");
   });

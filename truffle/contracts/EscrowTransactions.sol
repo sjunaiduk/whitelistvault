@@ -42,17 +42,30 @@ contract EscrowTransactions {
             moneySentToSellerByContract: false,
             price: price
         });
-        sellers[msg.sender].salesForAPresale[presale].saleInfoForWalletsToAdd[
-                walletToAdd
-            ] = saleInfo;
+        
 
-        sellers[msg.sender].totalSales++;
         bool presaleAlreadyExists = false;
         for (uint256 i = 0; i < sellers[msg.sender].presales.length; i++) {
             if (sellers[msg.sender].presales[i] == presale) {
                 presaleAlreadyExists = true;
             }
         }
+
+        bool buyersWalletAlreadyExists = false;
+        if(sellers[msg.sender].salesForAPresale[presale].saleInfoForWalletsToAdd[walletToAdd].price > 0
+        && sellers[msg.sender].salesForAPresale[presale].saleInfoForWalletsToAdd[walletToAdd].cancelled == false
+        && sellers[msg.sender].salesForAPresale[presale].saleInfoForWalletsToAdd[walletToAdd].walletAdded == false) {
+            buyersWalletAlreadyExists = true;
+        }
+        
+
+        require(buyersWalletAlreadyExists == false, "You already have a sale for this wallet");
+
+        sellers[msg.sender].salesForAPresale[presale].saleInfoForWalletsToAdd[
+                walletToAdd
+            ] = saleInfo;
+
+        sellers[msg.sender].totalSales++;
 
         if (presaleAlreadyExists == false) {
             sellers[msg.sender].presales.push(presale);

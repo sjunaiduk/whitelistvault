@@ -5,19 +5,25 @@
   https://trufflesuite.com/docs/truffle/getting-started/writing-external-scripts
 */
 
-const SimpleStorage = artifacts.require("SimpleStorage");
+const EscrowTransactions = artifacts.require("EscrowTransactions");
 
 module.exports = async function (callback) {
-  const deployed = await SimpleStorage.deployed();
+  const escrowTransactionsInstance = await EscrowTransactions.deployed();
 
-  const currentValue = (await deployed.read()).toNumber();
-  console.log(`Current SimpleStorage value: ${currentValue}`);
+  const accounts = await web3.eth.getAccounts();
+  const presaleAddress = "0x0000000000000000000000000000000000000123";
+  const seller = accounts[0];
+  const buyersWalletToAdd = accounts[1];
+  const price = "1000000000000000000"; // 1bnb
 
-  const { tx } = await deployed.write(currentValue + 1);
-  console.log(`Confirmed transaction ${tx}`);
+  await escrowTransactionsInstance.createSale(
+    presaleAddress,
+    buyersWalletToAdd,
+    price,
+    { from: seller }
+  );
 
-  const updatedValue = (await deployed.read()).toNumber();
-  console.log(`Updated SimpleStorage value: ${updatedValue}`);
+  const sales = await escrowTransactionsInstance.getSalesForSeller(seller);
 
-  callback();
+  console.log(JSON.stringify(sales, null, 2));
 };
