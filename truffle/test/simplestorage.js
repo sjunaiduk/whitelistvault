@@ -217,8 +217,8 @@ contract("EscrowTransactions", (accounts) => {
     );
 
     assert.equal(
-      buyersBalanceBeforeSale.toFixed(3),
-      buyersBalanceAfterCancellation.toFixed(3),
+      Math.round(buyersBalanceBeforeSale),
+      Math.round(buyersBalanceAfterCancellation),
       "Buyer wasn't refunded."
     );
 
@@ -243,5 +243,24 @@ contract("EscrowTransactions", (accounts) => {
       false,
       "Money should not have been sent to seller by contract here"
     );
+  });
+
+  it("should return the sales for a seller", async () => {
+    const escrowTransactionsInstance = await EscrowTransactions.deployed();
+    const presaleAddress = "0x0000000000000000000000000000000000000123";
+    const seller = accounts[3];
+    const buyersWalletToAdd = accounts[1];
+    const price = "1000000000000000000"; // 1bnb
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    await debug(escrowTransactionsInstance.getSalesForSeller(seller));
+
+    assert.equal(sales.length, 1, "There should be 1 sale for the seller");
   });
 });

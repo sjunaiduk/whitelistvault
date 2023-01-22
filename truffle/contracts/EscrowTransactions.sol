@@ -17,6 +17,9 @@ struct SalesForAPresale {
 }
 
 struct Seller {
+    uint256 totalSales;
+    address[] presales;
+    mapping(address => address[]) walletsForAPresale;
     mapping(address => SalesForAPresale) salesForAPresale;
     // address is the presale.
 }
@@ -42,6 +45,20 @@ contract EscrowTransactions {
         sellers[msg.sender].salesForAPresale[presale].saleInfoForWalletsToAdd[
                 walletToAdd
             ] = saleInfo;
+
+        sellers[msg.sender].totalSales++;
+        bool presaleAlreadyExists = false;
+        for (uint256 i = 0; i < sellers[msg.sender].presales.length; i++) {
+            if (sellers[msg.sender].presales[i] == presale) {
+                presaleAlreadyExists = true;
+            }
+        }
+
+        if (presaleAlreadyExists == false) {
+            sellers[msg.sender].presales.push(presale);
+        }
+
+        sellers[msg.sender].walletsForAPresale[presale].push(walletToAdd);
     }
 
     function acceptSaleAsBuyer(address seller, address presale) public payable {
@@ -127,11 +144,30 @@ contract EscrowTransactions {
             ];
     }
 
-    receive() external payable {}
+    function getSalesForSeller(address seller)
+        public
+        view
+        returns (SaleInfo[] memory)
+    {
+        uint256 salesAdded = 0;
+        SaleInfo[] memory saleInfo = new SaleInfo[](sellers[seller].totalSales);
+        for (uint256 i = 0; i < sellers[seller].presales.length; i++) {
+            address presale = sellers[seller].presales[i];
+            address[] memory walletsAddedToPresale = sellers[seller]
+                .walletsForAPresale[presale];
 
-    function getBalance() public view returns (uint256) {
-        return address(this).balance;
+            for (uint256 j = 0; j < walletsAddedToPresale.length; j++) {
+                address walletToAdd = walletsAddedToPresale[j];
+                saleInfo[salesAdded] = sellers[seller]
+                    .salesForAPresale[presale]
+                    .saleInfoForWalletsToAdd[walletToAdd];
+                salesAdded++;
+            }
+        }
+        return saleInfo;
     }
+
+    receive() external payable {}
 
     function withdraw() public {
         payable(msg.sender).transfer(address(this).balance);
