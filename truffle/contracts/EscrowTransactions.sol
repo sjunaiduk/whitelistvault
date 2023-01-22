@@ -59,6 +59,7 @@ contract EscrowTransactions {
             "You must send the exact amount of ETHER"
         );
 
+        payable(address(this)).transfer(msg.value);
         saleInfo.buyerAcceptedSaleAndSentBnbToContract = true;
 
         sellers[seller].salesForAPresale[presale].saleInfoForWalletsToAdd[
@@ -124,5 +125,15 @@ contract EscrowTransactions {
             sellers[seller].salesForAPresale[presale].saleInfoForWalletsToAdd[
                 walletToAdd
             ];
+    }
+
+    receive() external payable {}
+
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
+    function withdraw() public {
+        payable(msg.sender).transfer(address(this).balance);
     }
 }
