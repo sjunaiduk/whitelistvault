@@ -1,14 +1,20 @@
-import { EthProvider } from "./contexts/EthContext";
+import { EthContext, EthProvider, useEth } from "./contexts/EthContext";
 import "./App.css";
-import { ReadContractComponent } from "./components/ReadContract";
+
+import { ConnectWallet } from "./components/ConnectWallet";
 
 function App() {
+
+
+ 
   return (
     <EthProvider>
+    
+      
       <div id="App" >
         <div className="container">
-            <h1>Hello!!</h1>
-            <ReadContractComponent />
+            <ConnectWallet />
+         
         </div>
       </div>
     </EthProvider>

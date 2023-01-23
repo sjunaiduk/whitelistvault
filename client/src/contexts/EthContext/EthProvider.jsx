@@ -3,13 +3,13 @@ import Web3 from "web3";
 import EthContext from "./EthContext";
 import { reducer, actions, initialState } from "./state";
 
+
 function EthProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const init = useCallback(
-    async artifact => {
+    async (artifact) => {
       if (artifact) {
- 
         const web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
         const accounts = await web3.eth.requestAccounts();
         console.log(`Store users adress ${accounts[0]} as JWT token in browser local storage.`)
@@ -17,6 +17,7 @@ function EthProvider({ children }) {
         const { abi } = artifact;
         let address, contract;
         try {
+          console.log(`networkID: ${networkID}`)
           address = artifact.networks[networkID].address;
           contract = new web3.eth.Contract(abi, address);
         } catch (err) {
@@ -29,18 +30,18 @@ function EthProvider({ children }) {
       }
     }, []);
 
-  useEffect(() => {
+
+    
     const tryInit = async () => {
       try {
-        const artifact = require("../../contracts/SimpleStorage.json");
+        const artifact = require("../../contracts/SimpleStorage.json")
         init(artifact);
       } catch (err) {
         console.error(err);
       }
     };
 
-    tryInit();
-  }, [init]);
+  
 
   useEffect(() => {
     const events = ["chainChanged", "accountsChanged"];
@@ -57,7 +58,8 @@ function EthProvider({ children }) {
   return (
     <EthContext.Provider value={{
       state,
-      dispatch
+      dispatch,
+      tryInit
     }}>
       {children}
     </EthContext.Provider>
