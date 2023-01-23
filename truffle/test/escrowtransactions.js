@@ -1,5 +1,4 @@
 const EscrowTransactions = artifacts.require("EscrowTransactions");
-
 /*(0) 0xc319d186f4d66863f60bdd4daccf74142c477b28
 (1) 0x00ab82a10913756ce790b6139be6151cd9f4420d
 (2) 0x361e10407fe8f5503fe541b9a13ebcf958ebea03
