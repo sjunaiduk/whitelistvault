@@ -202,7 +202,7 @@ contract EscrowTransactionsV2 {
             }
         }
         if (saleInfo.price == 0) {
-            revert("Sale does not exist");
+            revert("Can't get sale info of a sale that doesn't exist. ");
         }
         return saleInfo;
     }
