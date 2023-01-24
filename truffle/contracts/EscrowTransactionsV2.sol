@@ -3,6 +3,7 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 struct SaleInfo {
+    address sellerAddress;
     address presaleAddress;
     address buyerAddress;
     bool buyerAcceptedSaleAndSentBnbToContract;
@@ -82,6 +83,7 @@ contract EscrowTransactionsV2 {
         uint256 price
     ) public {
         SaleInfo memory saleInfo = SaleInfo({
+            sellerAddress: msg.sender,
             presaleAddress: presale,
             buyerAddress: walletToAdd,
             buyerAcceptedSaleAndSentBnbToContract: false,
