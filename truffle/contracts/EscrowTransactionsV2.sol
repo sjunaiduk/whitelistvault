@@ -13,7 +13,7 @@ struct SaleInfo {
     uint256 price;
 }
 
-struct BuyerStats {
+struct WalletAddedStats {
     mapping(address => uint256) salesToABuyerForAPresale;
 }
 // needed to calculate size of arrays to return in function
@@ -23,14 +23,58 @@ struct SellerStats {
     uint256 totalSalesCancelled;
     uint256 totalSalesSuccessful;
     mapping(address => uint256) totalSalesForAPresale;
-    mapping(address => BuyerStats) totalSalesToABuyerForAPresale;
+    mapping(address => WalletAddedStats) totalSalesToABuyerForAPresale; // key is presale. value is a mapping of wallet to number of sales to that wallet
+}
+
+// Create a struct for the buyer, use this to track sales with each buyer etc
+
+struct BuyerStats {
+    uint256 totalSalesBuyerWasPartOf;
+    address[] sellersBuyerHasDealtWith;
+
+    // return final array of SellerStats, the size will be totalSalesBuyerWasPartOf.
+    // each element in the array will be a SellerStats struct
+
+    // loop through sellers buyer dealt with
+    // for each seller, loop through their sales and add to array if buyer is part of it
+
+    // return array
 }
 
 contract EscrowTransactionsV2 {
     mapping(address => SaleInfo[]) sales;
     mapping(address => SellerStats) public sellerStats;
+    mapping(address => BuyerStats) public buyerStats;
 
     // address is the seller.
+
+    function returnSalesForBuyer(address buyer)
+        public
+        view
+        returns (SaleInfo[] memory)
+    {
+        SaleInfo[] memory salesForBuyer = new SaleInfo[](
+            buyerStats[buyer].totalSalesBuyerWasPartOf
+        );
+        uint256 index = 0;
+
+        for (
+            uint256 i = 0;
+            i < buyerStats[buyer].sellersBuyerHasDealtWith.length;
+            i++
+        ) {
+            address seller = buyerStats[buyer].sellersBuyerHasDealtWith[i];
+            for (uint256 j = 0; j < sellerStats[seller].totalSales; j++) {
+                SaleInfo memory sale = sales[seller][j];
+                if (sale.buyerAddress == buyer) {
+                    salesForBuyer[index] = sale;
+                    index++;
+                }
+            }
+        }
+
+        return salesForBuyer;
+    }
 
     function createSale(
         address presale,
@@ -54,7 +98,7 @@ contract EscrowTransactionsV2 {
             if (
                 sales[msg.sender][i].presaleAddress == presale &&
                 sales[msg.sender][i].cancelled == false &&
-                sales[msg.sender][i].walletAdded == false && 
+                sales[msg.sender][i].walletAdded == false &&
                 sales[msg.sender][i].buyerAddress == walletToAdd
             ) {
                 buyersWalletAlreadyExists = true;
@@ -150,8 +194,6 @@ contract EscrowTransactionsV2 {
         sellerStats[msg.sender].totalSalesCancelled++;
         sellerStats[msg.sender].totalSalesPending--;
         sales[msg.sender][saleIndex] = saleInfo;
-
-     
     }
 
     function completeSale(
@@ -177,7 +219,9 @@ contract EscrowTransactionsV2 {
             }
         }
         if (saleInfo.price == 0) {
-            revert("No valid sale found. Must not be cancelled, wallet must not be added, buyer must have accepted sale and sent BNB to contract, and money must not have been sent to seller by contract.");
+            revert(
+                "No valid sale found. Must not be cancelled, wallet must not be added, buyer must have accepted sale and sent BNB to contract, and money must not have been sent to seller by contract."
+            );
         }
         require(
             saleInfo.buyerAcceptedSaleAndSentBnbToContract == true,
