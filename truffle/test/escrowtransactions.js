@@ -249,6 +249,7 @@ contract("EscrowTransactions", (accounts) => {
     const presaleAddress = "0x0000000000000000000000000000000000000123";
     const seller = accounts[0];
     const buyersWalletToAdd = accounts[1];
+    const buyersWalletToAdd2 = accounts[2];
     const price = "1000000000000000000"; // 1bnb
 
     await escrowTransactionsInstance.createSale(
@@ -258,8 +259,15 @@ contract("EscrowTransactions", (accounts) => {
       { from: seller }
     );
 
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      buyersWalletToAdd2,
+      price,
+      { from: seller }
+    );
+
     const sales = await escrowTransactionsInstance.getSalesForSeller(seller);
 
-    assert.equal(sales.length, 1, "There should be 1 sale for the seller");
+    assert.equal(sales.length, 2, "There should be 2 sale for the seller");
   });
 });

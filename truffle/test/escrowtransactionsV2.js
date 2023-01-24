@@ -15,13 +15,13 @@ contract("EscrowTransactionsV2", (accounts) => {
       { from: seller }
     );
 
-    const sale = await debug(
-      escrowTransactionsInstance.getSaleInfo(
-        seller,
-        presaleAddress,
-        buyersWalletToAdd
-      )
+    let sale = await escrowTransactionsInstance.getSaleInfo(
+      seller,
+      presaleAddress,
+      buyersWalletToAdd
     );
+
+    sale = sale[0];
 
     /*struct SaleInfo {
         bool buyerAcceptedSaleAndSentBnbToContract;
@@ -70,11 +70,13 @@ contract("EscrowTransactionsV2", (accounts) => {
       value: price,
     });
 
-    const sale = await escrowTransactionsInstance.getSaleInfo(
+    let sale = await escrowTransactionsInstance.getSaleInfo(
       seller,
       presaleAddress,
       buyersWalletToAdd
     );
+
+    sale = sale[0];
 
     const contractBalance = await web3.eth.getBalance(
       escrowTransactionsInstance.address
@@ -129,11 +131,13 @@ contract("EscrowTransactionsV2", (accounts) => {
       }
     );
 
-    const sale = await escrowTransactionsInstance.getSaleInfo(
+    let sale = await escrowTransactionsInstance.getSaleInfo(
       seller,
       presaleAddress,
       buyersWalletToAdd
     );
+
+    sale = sale[0];
 
     const contractBalance = await web3.eth.getBalance(
       escrowTransactionsInstance.address
@@ -198,11 +202,13 @@ contract("EscrowTransactionsV2", (accounts) => {
       web3.utils.fromWei(await web3.eth.getBalance(buyersWalletToAdd), "ether")
     );
 
-    const sale = await escrowTransactionsInstance.getSaleInfo(
+    let sale = await escrowTransactionsInstance.getSaleInfo(
       seller,
       presaleAddress,
       buyersWalletToAdd
     );
+
+    sale = sale[0];
 
     const contractBalance = await web3.eth.getBalance(
       escrowTransactionsInstance.address
@@ -254,5 +260,43 @@ contract("EscrowTransactionsV2", (accounts) => {
     const sales = await escrowTransactionsInstance.getSalesForSeller(seller);
 
     assert.equal(sales.length, 1, "There should be 1 sale for the seller");
+  });
+
+  it("should return the sales for a seller inlcuding cancellations of the same sale.", async () => {
+    const escrowTransactionsInstance = await EscrowTransactionsV2.new();
+    const presaleAddress = "0x0000000000000000000000000000000000000123";
+    const seller = accounts[0];
+    const buyersWalletToAdd = accounts[1];
+    const price = "1000000000000000000"; // 1bnb
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    await escrowTransactionsInstance.cancelSale(
+      presaleAddress,
+      buyersWalletToAdd,
+      {
+        from: seller,
+      }
+    );
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    const sales = await escrowTransactionsInstance.getSalesForSeller(seller);
+
+    assert.equal(
+      sales.length,
+      2,
+      "There should be 2 total sales for that seller, one cancelled and one active."
+    );
   });
 });

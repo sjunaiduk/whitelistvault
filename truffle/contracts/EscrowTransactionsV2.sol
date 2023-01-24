@@ -13,9 +13,21 @@ struct SaleInfo {
     uint256 price;
 }
 
+struct BuyerStats {
+    mapping(address => uint256) salesToABuyerForAPresale;
+}
+// needed to calculate size of arrays to return in function
+struct SellerStats {
+    uint256 totalSales;
+    uint256 totalSalesCancelled;
+    uint256 totalSalesSuccessful;
+    mapping(address => uint256) totalSalesForAPresale;
+    mapping(address => BuyerStats) totalSalesToABuyerForAPresale;
+}
+
 contract EscrowTransactionsV2 {
     mapping(address => SaleInfo[]) sales;
-    mapping(address => uint256) public totalSales;
+    mapping(address => SellerStats) public sellerStats;
 
     // address is the seller.
 
@@ -53,14 +65,18 @@ contract EscrowTransactionsV2 {
         );
 
         sales[msg.sender].push(saleInfo);
-        totalSales[msg.sender] = totalSales[msg.sender] + 1;
+        sellerStats[msg.sender].totalSales++;
+        sellerStats[msg.sender].totalSalesForAPresale[presale]++;
+        sellerStats[msg.sender]
+            .totalSalesToABuyerForAPresale[presale]
+            .salesToABuyerForAPresale[walletToAdd]++;
     }
 
     function acceptSaleAsBuyer(address seller, address presale) public payable {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
 
-        for (uint256 i = 0; i < totalSales[seller]; i++) {
+        for (uint256 i = 0; i < sellerStats[seller].totalSales; i++) {
             SaleInfo memory sale = sales[seller][i];
 
             if (
@@ -96,7 +112,7 @@ contract EscrowTransactionsV2 {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
 
-        for (uint256 i = 0; i < totalSales[msg.sender]; i++) {
+        for (uint256 i = 0; i < sellerStats[msg.sender].totalSales; i++) {
             SaleInfo memory sale = sales[msg.sender][i];
 
             if (
@@ -112,10 +128,6 @@ contract EscrowTransactionsV2 {
         if (saleInfo.price == 0) {
             revert("Sale does not exist");
         }
-        require(
-            saleInfo.buyerAcceptedSaleAndSentBnbToContract == true,
-            "Buyer has already accepted sale and sent BNB to the contract"
-        );
         require(saleInfo.cancelled == false, "Sale has already been cancelled");
         require(
             saleInfo.walletAdded == false,
@@ -132,6 +144,7 @@ contract EscrowTransactionsV2 {
             payable(saleInfo.buyerAddress).transfer(saleInfo.price);
         }
 
+        sellerStats[msg.sender].totalSalesCancelled++;
         sales[msg.sender][saleIndex] = saleInfo;
     }
 
@@ -143,7 +156,7 @@ contract EscrowTransactionsV2 {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
 
-        for (uint256 i = 0; i < totalSales[seller]; i++) {
+        for (uint256 i = 0; i < sellerStats[seller].totalSales; i++) {
             SaleInfo memory sale = sales[seller][i];
 
             if (
@@ -182,26 +195,36 @@ contract EscrowTransactionsV2 {
         }
 
         sales[seller][saleIndex] = saleInfo;
+        sellerStats[seller].totalSalesSuccessful++;
     }
 
+    // assume that for the same presale, a buyer can have a cancelled sale with the same wallet address,
+    // ill return an array.
     function getSaleInfo(
         address seller,
         address presale,
         address walletToAdd
-    ) public view returns (SaleInfo memory) {
-        SaleInfo memory saleInfo;
+    ) public view returns (SaleInfo[] memory) {
+        SaleInfo[] memory saleInfo = new SaleInfo[](
+            sellerStats[seller]
+                .totalSalesToABuyerForAPresale[presale]
+                .salesToABuyerForAPresale[walletToAdd]
+        );
 
-        for (uint256 i = 0; i < totalSales[seller]; i++) {
+        uint256 saleInfoCounter = 0;
+
+        for (uint256 i = 0; i < sellerStats[seller].totalSales; i++) {
             SaleInfo memory sale = sales[seller][i];
 
             if (
                 sale.presaleAddress == presale &&
                 sale.buyerAddress == walletToAdd
             ) {
-                saleInfo = sale;
+                saleInfo[saleInfoCounter] = sale;
+                saleInfoCounter++;
             }
         }
-        if (saleInfo.price == 0) {
+        if (saleInfo.length == 0) {
             revert("Can't get sale info of a sale that doesn't exist. ");
         }
         return saleInfo;

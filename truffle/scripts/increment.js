@@ -9,9 +9,9 @@ const EscrowTransactions = artifacts.require("EscrowTransactions");
 const EscrowTransactionsV2 = artifacts.require("EscrowTransactionsV2");
 
 module.exports = async function (callback) {
-  const escrowTransactionsInstance = await EscrowTransactions.new();
+  const escrowTransactionsInstance = await EscrowTransactions.deployed();
 
-  const escrowTransactionsV2Instance = await EscrowTransactionsV2.new();
+  const escrowTransactionsV2Instance = await EscrowTransactionsV2.deployed();
 
   const accounts = await web3.eth.getAccounts();
   const presaleAddress = "0x0000000000000000000000000000000000000123";
