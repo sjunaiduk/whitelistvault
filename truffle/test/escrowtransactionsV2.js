@@ -693,12 +693,123 @@ contract("EscrowTransactionsV2", (accounts) => {
       buyersWalletToAdd
     );
 
-    console.log(salesForBuyer);
+    //console.log(salesForBuyer);
 
     assert.equal(
       salesForBuyer.length,
       4,
       "There should be 4 sales for this buyer"
+    );
+  });
+
+  it("should let a buyer be part of multiple sales, and return the sales that buyer is part of, the number of pending, active and completed sales should be correct", async () => {
+    const escrowTransactionsInstance = await EscrowTransactionsV2.new();
+    const presaleAddress = "0x0000000000000000000000000000000000000123";
+    const seller = accounts[0];
+    const seller2 = accounts[4];
+    const buyersWalletToAdd = accounts[1];
+    const presaleAddress2 = accounts[2];
+    const presaleAddress3 = accounts[3];
+
+    const price = web3.utils.toWei("1", "ether");
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress2,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress3,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress3,
+      buyersWalletToAdd,
+      price,
+      { from: seller2 }
+    );
+
+    await escrowTransactionsInstance.acceptSaleAsBuyer(
+      seller2,
+      presaleAddress3,
+      {
+        from: buyersWalletToAdd,
+        value: price,
+      }
+    );
+
+    await escrowTransactionsInstance.acceptSaleAsBuyer(
+      seller,
+      presaleAddress3,
+      {
+        from: buyersWalletToAdd,
+        value: price,
+      }
+    );
+
+    await escrowTransactionsInstance.completeSale(
+      seller,
+      presaleAddress3,
+      buyersWalletToAdd
+    );
+
+    // 4 Total sales
+    // 2 has been accepted
+    // 1 Has been completed
+    // 2 are pending
+
+    const salesForBuyer = await escrowTransactionsInstance.getSalesForBuyer(
+      buyersWalletToAdd
+    );
+
+    const pendingSales = salesForBuyer.filter((sale) => {
+      return sale.buyerAcceptedSaleAndSentBnbToContract === false;
+    });
+
+    const acceptedSales = salesForBuyer.filter((sale) => {
+      return sale.buyerAcceptedSaleAndSentBnbToContract === true;
+    });
+
+    const completedSales = salesForBuyer.filter((sale) => {
+      return sale.moneySentToSellerByContract === true;
+    });
+
+    //console.log(salesForBuyer);
+
+    assert.equal(
+      salesForBuyer.length,
+      4,
+      "There should be 4 sales for this buyer"
+    );
+
+    assert.equal(
+      pendingSales.length,
+      2,
+      "There should be 2 pending sales for this buyer"
+    );
+
+    assert.equal(
+      acceptedSales.length,
+      2,
+      "There should be 2 accepted sales for this buyer"
+    );
+
+    assert.equal(
+      completedSales.length,
+      1,
+      "There should be 1 completed sales for this buyer"
     );
   });
 });
