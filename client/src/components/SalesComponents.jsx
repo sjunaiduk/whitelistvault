@@ -71,6 +71,7 @@ export const AcceptSale = () => {
 
   const [sellersAddress, setSellersAddress] = useState("");
   const [presaleAddress, setPresaleAddress] = useState("");
+  const [price, setPrice] = useState(0);
 
   const isInvalidAddress = (address) => {
     const invalid = !state.web3.utils.isAddress(address);
@@ -83,9 +84,10 @@ export const AcceptSale = () => {
       `Accepting sale for ${sellersAddress} and presale ${presaleAddress}...`
     );
     console.log(`Accounts: ${state.accounts}`);
+    const priceInWei = state.web3.utils.toWei(price.toString(), "ether");
     await state.contract.methods
       .acceptSaleAsBuyer(sellersAddress, presaleAddress)
-      .send({ from: state.accounts[0] });
+      .send({ from: state.accounts[0], value: priceInWei });
   };
   return (
     <div>
@@ -110,6 +112,13 @@ export const AcceptSale = () => {
               placeholder="Presale Address"
               value={presaleAddress}
               onChange={(e) => setPresaleAddress(e.target.value)}
+            />
+            <input
+              required
+              type="number"
+              placeholder="Price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
             />
             <button
               disabled={
@@ -166,7 +175,7 @@ export const CreateSale = () => {
               required
               type="text"
               placeholder="Wallet to Add (buyer)"
-              value={sellersAddress}
+              value={walletToAdd}
               onChange={(e) => setWalletToAdd(e.target.value)}
             />
             <input
@@ -176,9 +185,16 @@ export const CreateSale = () => {
               value={presaleAddress}
               onChange={(e) => setPresaleAddress(e.target.value)}
             />
+            <input
+              required
+              type="number"
+              placeholder="Price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+            />
             <button
               disabled={
-                isInvalidAddress(sellersAddress) ||
+                isInvalidAddress(walletToAdd) ||
                 isInvalidAddress(presaleAddress)
               }
               onClick={createSale}
