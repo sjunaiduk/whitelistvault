@@ -19,6 +19,7 @@ struct BuyerStats {
 // needed to calculate size of arrays to return in function
 struct SellerStats {
     uint256 totalSales;
+    uint256 totalSalesPending;
     uint256 totalSalesCancelled;
     uint256 totalSalesSuccessful;
     mapping(address => uint256) totalSalesForAPresale;
@@ -53,7 +54,8 @@ contract EscrowTransactionsV2 {
             if (
                 sales[msg.sender][i].presaleAddress == presale &&
                 sales[msg.sender][i].cancelled == false &&
-                sales[msg.sender][i].walletAdded == false
+                sales[msg.sender][i].walletAdded == false && 
+                sales[msg.sender][i].buyerAddress == walletToAdd
             ) {
                 buyersWalletAlreadyExists = true;
             }
@@ -67,6 +69,7 @@ contract EscrowTransactionsV2 {
         sales[msg.sender].push(saleInfo);
         sellerStats[msg.sender].totalSales++;
         sellerStats[msg.sender].totalSalesForAPresale[presale]++;
+        sellerStats[msg.sender].totalSalesPending++;
         sellerStats[msg.sender]
             .totalSalesToABuyerForAPresale[presale]
             .salesToABuyerForAPresale[walletToAdd]++;
@@ -145,7 +148,10 @@ contract EscrowTransactionsV2 {
         }
 
         sellerStats[msg.sender].totalSalesCancelled++;
+        sellerStats[msg.sender].totalSalesPending--;
         sales[msg.sender][saleIndex] = saleInfo;
+
+     
     }
 
     function completeSale(
@@ -171,7 +177,7 @@ contract EscrowTransactionsV2 {
             }
         }
         if (saleInfo.price == 0) {
-            revert("Sale does not exist");
+            revert("No valid sale found. Must not be cancelled, wallet must not be added, buyer must have accepted sale and sent BNB to contract, and money must not have been sent to seller by contract.");
         }
         require(
             saleInfo.buyerAcceptedSaleAndSentBnbToContract == true,
@@ -196,6 +202,7 @@ contract EscrowTransactionsV2 {
 
         sales[seller][saleIndex] = saleInfo;
         sellerStats[seller].totalSalesSuccessful++;
+        sellerStats[msg.sender].totalSalesPending--;
     }
 
     // assume that for the same presale, a buyer can have a cancelled sale with the same wallet address,
