@@ -649,4 +649,51 @@ contract("EscrowTransactionsV2", (accounts) => {
       "Seller was sent money when they shouldn't have been as the sale was cancelled."
     );
   });
+
+  it("should let a seller make multiple sales, let the buyer accept them, and complete them", async () => {
+    const escrowTransactionsInstance = await EscrowTransactionsV2.new();
+    const presaleAddress = "0x0000000000000000000000000000000000000123";
+    const seller = accounts[0];
+    const buyersWalletToAdd = accounts[1];
+    const presaleAddress2 = accounts[2];
+    const presaleAddress3 = accounts[3];
+    const buyersBalanceBeforeSale = Number(
+      web3.utils.fromWei(await web3.eth.getBalance(buyersWalletToAdd), "ether")
+    );
+    const sellersBalanceBeforeSale = Number(
+      web3.utils.fromWei(await web3.eth.getBalance(seller), "ether")
+    );
+    const price = web3.utils.toWei("1", "ether");
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress2,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress3,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    const salesForBuyer = await escrowTransactionsInstance.getSalesForBuyer(
+      buyersWalletToAdd
+    );
+
+    assert.equal(
+      salesForBuyer.length,
+      3,
+      "There should be 3 sales for this buyer"
+    );
+  });
 });

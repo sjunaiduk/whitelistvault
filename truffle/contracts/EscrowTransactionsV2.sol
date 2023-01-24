@@ -48,7 +48,7 @@ contract EscrowTransactionsV2 {
 
     // address is the seller.
 
-    function returnSalesForBuyer(address buyer)
+    function getSalesForBuyer(address buyer)
         public
         view
         returns (SaleInfo[] memory)
@@ -104,6 +104,27 @@ contract EscrowTransactionsV2 {
                 buyersWalletAlreadyExists = true;
             }
         }
+
+        bool hasBuyerDealtWithSeller = false;
+
+        for (
+            uint256 i = 0;
+            i < buyerStats[walletToAdd].sellersBuyerHasDealtWith.length;
+            i++
+        ) {
+            if (
+                buyerStats[walletToAdd].sellersBuyerHasDealtWith[i] ==
+                msg.sender
+            ) {
+                hasBuyerDealtWithSeller = true;
+            }
+        }
+
+        if (hasBuyerDealtWithSeller == false) {
+            buyerStats[walletToAdd].sellersBuyerHasDealtWith.push(msg.sender);
+        }
+
+        buyerStats[walletToAdd].totalSalesBuyerWasPartOf++;
 
         require(
             buyersWalletAlreadyExists == false,
