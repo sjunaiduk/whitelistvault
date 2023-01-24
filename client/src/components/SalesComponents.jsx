@@ -225,7 +225,7 @@ export const CompleteSale = () => {
 
   const completeSale = async () => {
     console.log(
-      `Creating sale for presale ${presaleAddress} and wallet ${walletToAdd}, price ${price}...`
+      `Completing sale for seller ${sellerAddress}, presale ${presaleAddress} and wallet ${walletToAdd}...`
     );
     console.log(`Accounts: ${state.accounts}`);
     await state.contract.methods

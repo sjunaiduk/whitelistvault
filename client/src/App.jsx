@@ -3,6 +3,7 @@ import "./App.css";
 import { ConnectWallet } from "./components/ConnectWallet";
 import {
   AcceptSale,
+  CompleteSale,
   CreateSale,
   ViewSales,
 } from "./components/SalesComponents";
@@ -20,6 +21,7 @@ function App() {
             <ViewSales sellerAddress={state.accounts[0]} />
             <AcceptSale />
             <CreateSale />
+            <CompleteSale />
           </>
         )}
       </div>
