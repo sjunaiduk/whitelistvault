@@ -196,7 +196,7 @@ contract EscrowTransactionsV2 {
         saleInfo.walletAdded = true;
 
         if (saleInfo.buyerAcceptedSaleAndSentBnbToContract == true) {
-            payable(msg.sender).transfer(saleInfo.price);
+            payable(seller).transfer(saleInfo.price);
             saleInfo.moneySentToSellerByContract = true;
         }
 
