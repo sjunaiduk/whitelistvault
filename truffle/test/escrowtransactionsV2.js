@@ -650,19 +650,15 @@ contract("EscrowTransactionsV2", (accounts) => {
     );
   });
 
-  it("should let a seller make multiple sales, let the buyer accept them, and complete them", async () => {
+  it("should let a buyer be part of multiple sales, and return the sales that buyer is part of", async () => {
     const escrowTransactionsInstance = await EscrowTransactionsV2.new();
     const presaleAddress = "0x0000000000000000000000000000000000000123";
     const seller = accounts[0];
+    const seller2 = accounts[4];
     const buyersWalletToAdd = accounts[1];
     const presaleAddress2 = accounts[2];
     const presaleAddress3 = accounts[3];
-    const buyersBalanceBeforeSale = Number(
-      web3.utils.fromWei(await web3.eth.getBalance(buyersWalletToAdd), "ether")
-    );
-    const sellersBalanceBeforeSale = Number(
-      web3.utils.fromWei(await web3.eth.getBalance(seller), "ether")
-    );
+
     const price = web3.utils.toWei("1", "ether");
 
     await escrowTransactionsInstance.createSale(
@@ -686,14 +682,23 @@ contract("EscrowTransactionsV2", (accounts) => {
       { from: seller }
     );
 
+    await escrowTransactionsInstance.createSale(
+      presaleAddress3,
+      buyersWalletToAdd,
+      price,
+      { from: seller2 }
+    );
+
     const salesForBuyer = await escrowTransactionsInstance.getSalesForBuyer(
       buyersWalletToAdd
     );
 
+    console.log(salesForBuyer);
+
     assert.equal(
       salesForBuyer.length,
-      3,
-      "There should be 3 sales for this buyer"
+      4,
+      "There should be 4 sales for this buyer"
     );
   });
 });
