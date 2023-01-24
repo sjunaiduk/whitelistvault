@@ -55,11 +55,16 @@ function EthProvider({ children }) {
     };
   }, [init, state.artifact]);
 
+  const logout = useCallback(() => {
+    dispatch({ type: actions.logout });
+  }, []);
+
   return (
     <EthContext.Provider value={{
       state,
       dispatch,
-      tryInit
+      tryInit,
+      logout
     }}>
       {children}
     </EthContext.Provider>
