@@ -1,9 +1,18 @@
 import React, { useState } from "react";
 import { useEth } from "../contexts/EthContext";
-let BigInt = require("big-integer");
-const artifact = require("../contracts/EscrowTransactionsV2.json");
-const Web3 = require("web3");
-const web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
+
+/*
+struct SaleInfo {
+    address presaleAddress;
+    address buyerAddress;
+    bool buyerAcceptedSaleAndSentBnbToContract;
+    bool cancelled;
+    bool walletAdded;
+    string presalePlatform;
+    bool moneySentToSellerByContract;
+    uint256 price;
+}
+ */
 
 export const ViewSales = ({ sellerAddress }) => {
   const { state } = useEth();
@@ -11,29 +20,43 @@ export const ViewSales = ({ sellerAddress }) => {
   const [sales, setSales] = useState(null);
 
   const getSales = async () => {
-    const { abi } = artifact;
-
-    const contract = new web3.eth.Contract(
-      abi,
-      "0xD98557ae993cb1054Add68FF2a77A7CB2Bc9Bf87"
-    );
-
     console.log(`Fetching sales for ${sellerAddress}...`);
-    console.log(state.contract);
-    const saleData = await contract.methods
-      .getSaleInfo(
-        "0x00aB82a10913756ce790b6139BE6151cD9f4420D",
-        "0x0000000000000000000000000000000000000123",
-        "0x0000000000000000000000000000000000000123"
-      )
+    const saleData = await state.contract.methods
+      .getSalesForSeller(sellerAddress)
       .call();
-    console.log("saleData", saleData);
+    setSales(saleData);
   };
   return (
     <div>
       <h1>Sales:</h1>
       {state.accounts?.length ? (
         <>
+          {sales ? (
+            <ul>
+              {sales.map((sale) => (
+                <li key={sale}>
+                  <p>Presale Address: {sale.presaleAddress}</p>
+                  <p>Buyer Address: {sale.buyerAddress}</p>
+                  <p>
+                    Buyer Accepted Sale And Sent BNB To Contract:{" "}
+                    {sale.buyerAcceptedSaleAndSentBnbToContract
+                      ? "True"
+                      : "False"}
+                  </p>
+                  <p>Cancelled: {sale.cancelled ? "True" : "False"}</p>
+                  <p>Wallet Added: {sale.walletAdded ? "True" : "False"}</p>
+                  <p>Presale Platform: {sale.presalePlatform}</p>
+                  <p>
+                    Money Sent To Seller By Contract:{" "}
+                    {sale.moneySentToSellerByContract ? "True" : "False"}
+                  </p>
+                  <p>Price: {sale.price}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No sales yet.</p>
+          )}
           <button onClick={getSales}>Get Sales</button>
         </>
       ) : (

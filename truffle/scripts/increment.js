@@ -14,6 +14,7 @@ module.exports = async function (callback) {
   const accounts = await web3.eth.getAccounts();
   const presaleAddress = "0x0000000000000000000000000000000000000123";
   const seller = accounts[0];
+  console.log(`Seller: ${seller}`);
   const buyersWalletToAdd = accounts[1];
   const buyersWalletToAdd2 = accounts[2];
   const buyersWalletToAdd3 = accounts[3];
