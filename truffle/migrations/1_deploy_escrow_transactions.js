@@ -1,5 +1,4 @@
-const EscrowTransactions = artifacts.require("EscrowTransactionsV2");
-const EscrowTransactionsV2 = artifacts.require("EscrowTransactions");
+const EscrowTransactionsV2 = artifacts.require("EscrowTransactionsV2");
 
 module.exports = async function (deployer) {
   //await deployer.deploy(EscrowTransactions);
