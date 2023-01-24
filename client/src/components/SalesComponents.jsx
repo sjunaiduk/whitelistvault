@@ -65,3 +65,51 @@ export const ViewSales = ({ sellerAddress }) => {
     </div>
   );
 };
+
+
+export const AcceptSale = () => {
+  const { state, web3 } = useEth();
+
+   const [sellersAddress, setSellersAddress] = useState(null);
+   const [presaleAddress, setPresaleAddress] = useState(null);
+
+   const isInvalidAddress = (address) => {
+    return !web3.utils.isAddress(address);
+  };
+   
+
+  const acceptSale = async () => {
+    console.log(`Accepting sale ${sale}...`);
+    await state.contract.methods
+      .acceptSaleAsBuyer(sellersAddress, presaleAddress)
+      .send({ from: state.accounts[0] });
+  };
+  return (
+    <div>
+      <h1>Sales:</h1>
+      {state.accounts?.length ? (
+        <>
+          <form >
+            <input
+            required
+              type="text"
+              placeholder="Seller's Address"
+              value={sellersAddress}
+              onChange={(e) => setSellersAddress(e.target.value)}
+            />
+            <input
+            required
+              type="text"
+              placeholder="Presale Address"
+              value={presaleAddress}
+              onChange={(e) => setPresaleAddress(e.target.value)}
+            />
+            <button disabled = {isInvalidAddress(sellersAddress) && isInvalidAddress(presaleAddress)} onClick={acceptSale}>Accept Sale</button>
+          </form>
+        </>
+      ) : (
+        <h3>You are not connected.</h3>
+      )}
+    </div>
+  );
+}

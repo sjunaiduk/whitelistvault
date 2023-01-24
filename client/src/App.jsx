@@ -1,7 +1,7 @@
 import "./App.css";
 
 import { ConnectWallet } from "./components/ConnectWallet";
-import { ViewSales } from "./components/ViewSales";
+import { ViewSales } from "./components/SalesComponents";
 import { useEth } from "./contexts/EthContext";
 
 function App() {
