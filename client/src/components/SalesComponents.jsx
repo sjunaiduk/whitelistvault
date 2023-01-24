@@ -66,20 +66,23 @@ export const ViewSales = ({ sellerAddress }) => {
   );
 };
 
-
 export const AcceptSale = () => {
-  const { state, web3 } = useEth();
+  const { state } = useEth();
 
-   const [sellersAddress, setSellersAddress] = useState(null);
-   const [presaleAddress, setPresaleAddress] = useState(null);
+  const [sellersAddress, setSellersAddress] = useState("");
+  const [presaleAddress, setPresaleAddress] = useState("");
 
-   const isInvalidAddress = (address) => {
-    return !web3.utils.isAddress(address);
+  const isInvalidAddress = (address) => {
+    const invalid = !state.web3.utils.isAddress(address);
+    console.log(`Invalid address: ${invalid}`);
+    return invalid;
   };
-   
 
   const acceptSale = async () => {
-    console.log(`Accepting sale ${sale}...`);
+    console.log(
+      `Accepting sale for ${sellersAddress} and presale ${presaleAddress}...`
+    );
+    console.log(`Accounts: ${state.accounts}`);
     await state.contract.methods
       .acceptSaleAsBuyer(sellersAddress, presaleAddress)
       .send({ from: state.accounts[0] });
@@ -89,22 +92,34 @@ export const AcceptSale = () => {
       <h1>Sales:</h1>
       {state.accounts?.length ? (
         <>
-          <form >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
+          >
             <input
-            required
+              required
               type="text"
               placeholder="Seller's Address"
               value={sellersAddress}
               onChange={(e) => setSellersAddress(e.target.value)}
             />
             <input
-            required
+              required
               type="text"
               placeholder="Presale Address"
               value={presaleAddress}
               onChange={(e) => setPresaleAddress(e.target.value)}
             />
-            <button disabled = {isInvalidAddress(sellersAddress) && isInvalidAddress(presaleAddress)} onClick={acceptSale}>Accept Sale</button>
+            <button
+              disabled={
+                isInvalidAddress(sellersAddress) ||
+                isInvalidAddress(presaleAddress)
+              }
+              onClick={acceptSale}
+            >
+              Accept Sale
+            </button>
           </form>
         </>
       ) : (
@@ -112,4 +127,69 @@ export const AcceptSale = () => {
       )}
     </div>
   );
-}
+};
+
+export const CreateSale = () => {
+  const { state } = useEth();
+
+  const [presaleAddress, setPresaleAddress] = useState("");
+  const [walletToAdd, setWalletToAdd] = useState("");
+  const [price, setPrice] = useState(0);
+
+  const isInvalidAddress = (address) => {
+    const invalid = !state.web3.utils.isAddress(address);
+    console.log(`Invalid address: ${invalid}`);
+    return invalid;
+  };
+
+  const createSale = async () => {
+    console.log(
+      `Creating sale for presale ${presaleAddress} and wallet ${walletToAdd}, price ${price}...`
+    );
+    console.log(`Accounts: ${state.accounts}`);
+    let priceInWei = state.web3.utils.toWei(price.toString(), "ether");
+    await state.contract.methods
+      .createSale(presaleAddress, walletToAdd, priceInWei)
+      .send({ from: state.accounts[0] });
+  };
+  return (
+    <div>
+      <h1>Sales:</h1>
+      {state.accounts?.length ? (
+        <>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
+          >
+            <input
+              required
+              type="text"
+              placeholder="Wallet to Add (buyer)"
+              value={sellersAddress}
+              onChange={(e) => setWalletToAdd(e.target.value)}
+            />
+            <input
+              required
+              type="text"
+              placeholder="Presale Address"
+              value={presaleAddress}
+              onChange={(e) => setPresaleAddress(e.target.value)}
+            />
+            <button
+              disabled={
+                isInvalidAddress(sellersAddress) ||
+                isInvalidAddress(presaleAddress)
+              }
+              onClick={createSale}
+            >
+              Create Sale
+            </button>
+          </form>
+        </>
+      ) : (
+        <h3>You are not connected.</h3>
+      )}
+    </div>
+  );
+};
