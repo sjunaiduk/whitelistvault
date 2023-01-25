@@ -925,4 +925,56 @@ contract("EscrowTransactionsV2", (accounts) => {
     );
     //
   });
+
+  it("should not let a buyer try to cancel someone elses sale", async () => {
+    const escrowTransactionsInstance = await EscrowTransactionsV2.new();
+    const presaleAddress = "0x0000000000000000000000000000000000000123";
+    const seller = accounts[0];
+    const buyersWalletToAdd = accounts[1];
+    const badBuyer = accounts[2];
+
+    const price = web3.utils.toWei("1", "ether");
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    await escrowTransactionsInstance.acceptSaleAsBuyer(seller, presaleAddress, {
+      from: buyersWalletToAdd,
+      value: price,
+    });
+
+    // wait 5 minutes
+    await time.increase(time.duration.minutes(5));
+
+    // try cancelling a sale after 5 minutes
+    try {
+      await escrowTransactionsInstance.cancelSale(
+        presaleAddress,
+        buyersWalletToAdd,
+        seller,
+        {
+          from: badBuyer,
+        }
+      );
+    } catch (e) {
+      assert.equal(e.reason, "You are not the buyer or seller of this sale");
+    }
+
+    // should not be cancelled
+    const saleInfo = await escrowTransactionsInstance.getSaleInfo(
+      seller,
+      presaleAddress,
+      buyersWalletToAdd
+    );
+
+    assert.equal(
+      saleInfo[0].cancelled,
+      false,
+      "The sale could be cancelled by the Seller or Buyer. No one should be able to cancel someone elses sale"
+    );
+  });
 });
