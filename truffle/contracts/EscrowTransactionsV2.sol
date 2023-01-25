@@ -25,6 +25,7 @@ struct SellerStats {
     uint256 totalSalesCancelled;
     uint256 totalSalesSuccessful;
     mapping(address => uint256) totalSalesForAPresale;
+    // only have these mappings so I can get multiple sales to the same buyer for a presale
     mapping(address => WalletAddedStats) totalSalesToABuyerForAPresale; // key is presale. value is a mapping of wallet to number of sales to that wallet
 }
 
