@@ -3,6 +3,7 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 struct SaleInfo {
+    uint256 creationTimestamp;
     address sellerAddress;
     address presaleAddress;
     address buyerAddress;
@@ -83,6 +84,7 @@ contract EscrowTransactionsV2 {
         uint256 price
     ) public {
         SaleInfo memory saleInfo = SaleInfo({
+            creationTimestamp: block.timestamp,
             sellerAddress: msg.sender,
             presaleAddress: presale,
             buyerAddress: walletToAdd,
@@ -178,12 +180,18 @@ contract EscrowTransactionsV2 {
         sales[seller][saleIndex] = saleInfo;
     }
 
-    function cancelSale(address presale, address walletToAdd) public {
+    // both seller and buyer can cancel a sale.
+
+    function cancelSale(
+        address presale,
+        address walletToAdd,
+        address sellersAddress
+    ) public {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
 
-        for (uint256 i = 0; i < sellerStats[msg.sender].totalSales; i++) {
-            SaleInfo memory sale = sales[msg.sender][i];
+        for (uint256 i = 0; i < sellerStats[sellersAddress].totalSales; i++) {
+            SaleInfo memory sale = sales[sellersAddress][i];
 
             if (
                 sale.presaleAddress == presale &&
@@ -198,7 +206,14 @@ contract EscrowTransactionsV2 {
         if (saleInfo.price == 0) {
             revert("Sale does not exist");
         }
+        require(
+            msg.sender == saleInfo.buyerAddress ||
+                msg.sender == saleInfo.sellerAddress,
+            "You are not the buyer or seller of this sale"
+        );
         require(saleInfo.cancelled == false, "Sale has already been cancelled");
+
+        // check if sale has been completed.
         require(
             saleInfo.walletAdded == false,
             "Wallet has already been added to the presale"
@@ -208,15 +223,30 @@ contract EscrowTransactionsV2 {
             "Money has already been sent to the seller"
         );
 
+        // Seller can cancel anytime before sale completes.
+
+        // Buyer can't. Seller may have submitted the wallet, before it get's added he can maliciously cancel the sale and get a refund.
+        // He can only cancel within 5 minutes of accepting the sale.
+        if (msg.sender == saleInfo.buyerAddress) {
+            uint256 timeDifference = block.timestamp -
+                saleInfo.creationTimestamp;
+
+            require(
+                timeDifference > 5 minutes,
+                "You can't cancel a sale within 5 minutes of accepting it (as a buyer)"
+            );
+        }
+
         saleInfo.cancelled = true;
 
+        // if buyer sent BNB to ca refund him.
         if (saleInfo.buyerAcceptedSaleAndSentBnbToContract == true) {
             payable(saleInfo.buyerAddress).transfer(saleInfo.price);
         }
 
-        sellerStats[msg.sender].totalSalesCancelled++;
-        sellerStats[msg.sender].totalSalesPending--;
-        sales[msg.sender][saleIndex] = saleInfo;
+        sellerStats[sellersAddress].totalSalesCancelled++;
+        sellerStats[sellersAddress].totalSalesPending--;
+        sales[sellersAddress][saleIndex] = saleInfo;
     }
 
     function completeSale(

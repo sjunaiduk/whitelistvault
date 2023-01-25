@@ -1,3 +1,5 @@
+const { time } = require("openzeppelin-test-helpers");
+
 const EscrowTransactionsV2 = artifacts.require("EscrowTransactionsV2");
 
 contract("EscrowTransactionsV2", (accounts) => {
@@ -191,6 +193,7 @@ contract("EscrowTransactionsV2", (accounts) => {
     await escrowTransactionsInstance.cancelSale(
       presaleAddress,
       buyersWalletToAdd,
+      seller,
       {
         from: seller,
       }
@@ -277,6 +280,7 @@ contract("EscrowTransactionsV2", (accounts) => {
     await escrowTransactionsInstance.cancelSale(
       presaleAddress,
       buyersWalletToAdd,
+      seller,
       {
         from: seller,
       }
@@ -323,6 +327,7 @@ contract("EscrowTransactionsV2", (accounts) => {
     await escrowTransactionsInstance.cancelSale(
       presaleAddress,
       buyersWalletToAdd,
+      seller,
       {
         from: seller,
       }
@@ -811,5 +816,113 @@ contract("EscrowTransactionsV2", (accounts) => {
       1,
       "There should be 1 completed sales for this buyer"
     );
+  });
+  it("should not let a buyer accept and cancel within 5 minutes but allow after.", async () => {
+    const escrowTransactionsInstance = await EscrowTransactionsV2.new();
+    const presaleAddress = "0x0000000000000000000000000000000000000123";
+    const presaleAddress2 = "0x0000000000000000000000000000000000000124";
+    const seller = accounts[0];
+    const buyersWalletToAdd = accounts[1];
+
+    const price = web3.utils.toWei("1", "ether");
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress2,
+      buyersWalletToAdd,
+      price,
+      { from: seller }
+    );
+
+    await escrowTransactionsInstance.acceptSaleAsBuyer(seller, presaleAddress, {
+      from: buyersWalletToAdd,
+      value: price,
+    });
+
+    await escrowTransactionsInstance.acceptSaleAsBuyer(
+      seller,
+      presaleAddress2,
+      {
+        from: buyersWalletToAdd,
+        value: price,
+      }
+    );
+
+    // try cancelling a sale right after
+    try {
+      await escrowTransactionsInstance.cancelSale(
+        presaleAddress,
+        buyersWalletToAdd,
+        seller,
+        {
+          from: buyersWalletToAdd,
+        }
+      );
+    } catch (e) {
+      assert.equal(
+        e.reason,
+        "You can't cancel a sale within 5 minutes of accepting it (as a buyer)"
+      );
+    }
+
+    // wait 5 minutes
+    await time.increase(time.duration.minutes(5));
+
+    // try cancelling a sale after 5 minutes
+
+    const buyersBalanceBeforeValidCancellation = await web3.eth.getBalance(
+      buyersWalletToAdd
+    );
+
+    await escrowTransactionsInstance.cancelSale(
+      presaleAddress2,
+      buyersWalletToAdd,
+      seller,
+      {
+        from: buyersWalletToAdd,
+      }
+    );
+
+    const buyersBalanceAfterValidCancellation = await web3.eth.getBalance(
+      buyersWalletToAdd
+    );
+
+    // should not be cancelled
+    const saleInfo = await escrowTransactionsInstance.getSaleInfo(
+      seller,
+      presaleAddress,
+      buyersWalletToAdd
+    );
+
+    // should be cancelled
+    const saleInfo2 = await escrowTransactionsInstance.getSaleInfo(
+      seller,
+      presaleAddress2,
+      buyersWalletToAdd
+    );
+
+    assert.equal(
+      saleInfo[0].cancelled,
+      false,
+      "The first sale should not be cancelled since buyer cancelled within 5 minutes of accepting"
+    );
+
+    assert.equal(
+      saleInfo2[0].cancelled,
+      true,
+      "The second sale should be cancelled since buyer cancelled after 5 minutes of accepting"
+    );
+    assert(
+      buyersBalanceAfterValidCancellation >
+        buyersBalanceBeforeValidCancellation,
+      "Buyers balance should be higher after valid cancellation"
+    );
+    //
   });
 });
