@@ -18,61 +18,31 @@
   </head>
 
   <body>
-    <div class="table">
+    <div class="table" id="dim">
       <ul class="table__header">
-        <li class="table__header-item optional">Action</li>
         <li class="table__header-item optional">Address</li>
         <li class="table__header-item optional">Platform</li>
         <li class="table__header-item">Price</li>
         <li class="table__header-item">Status</li>
+        <li class="table__header-item optional">Action</li>
       </ul>
 
       <div class="table__body">
         <ul class="table__row action-hidden">
           <div class="table__row-details">
-            <li class="show-row-action">
-              <svg
-                version="1.1"
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                width="40px"
-                height="40px"
-                viewBox="0,0,256,256"
-              >
-                <g
-                  fill="#ff5bca"
-                  fill-rule="nonzero"
-                  stroke="none"
-                  stroke-width="1"
-                  stroke-linecap="butt"
-                  stroke-linejoin="miter"
-                  stroke-miterlimit="10"
-                  stroke-dasharray=""
-                  stroke-dashoffset="0"
-                  font-family="none"
-                  font-weight="none"
-                  font-size="none"
-                  text-anchor="none"
-                  style="mix-blend-mode: normal"
-                >
-                  <g transform="scale(8,8)">
-                    <path
-                      d="M16,26c-1.104,0 -2,-0.896 -2,-2v-16c0,-1.104 0.896,-2 2,-2c1.104,0 2,0.896 2,2v16c0,1.104 -0.896,2 -2,2zM24,26c-1.104,0 -2,-0.896 -2,-2v-16c0,-1.104 0.896,-2 2,-2c1.104,0 2,0.896 2,2v16c0,1.104 -0.896,2 -2,2zM8,26c-1.104,0 -2,-0.896 -2,-2v-16c0,-1.104 0.896,-2 2,-2c1.104,0 2,0.896 2,2v16c0,1.104 -0.896,2 -2,2z"
-                    ></path>
-                  </g>
-                </g>
-              </svg>
-            </li>
-            <li class="table__body-item optional">0x0...0</li>
+            <li class="table__body-item optional">0x0...000</li>
             <li class="table__body-item optional">Ethereum</li>
             <li class="table__body-item">2 ETH</li>
-            <li class="table__body-item">Inactive</li>
+            <li class="table__body-item action tick">Success</li>
+            <li class="show-row-action">
+              <i class="burger"> </i>
+            </li>
           </div>
 
           <div class="card table__row-action">
             <h3 class="card__header">Pending Sale</h3>
             <p class="card__text">
-              Wallet address: 0x0...0
+              Wallet address: 0x0341235421230405305053231
               <br />
               Platform: Ethereum
               <br />
@@ -86,53 +56,80 @@
         </ul>
         <ul class="table__row action-hidden">
           <div class="table__row-details">
-            <li class="show-row-action">
-              <svg
-                version="1.1"
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                width="40px"
-                height="40px"
-                viewBox="0,0,256,256"
-              >
-                <g
-                  fill="#ff5bca"
-                  fill-rule="nonzero"
-                  stroke="none"
-                  stroke-width="1"
-                  stroke-linecap="butt"
-                  stroke-linejoin="miter"
-                  stroke-miterlimit="10"
-                  stroke-dasharray=""
-                  stroke-dashoffset="0"
-                  font-family="none"
-                  font-weight="none"
-                  font-size="none"
-                  text-anchor="none"
-                  style="mix-blend-mode: normal"
-                >
-                  <g transform="scale(8,8)">
-                    <path
-                      d="M16,26c-1.104,0 -2,-0.896 -2,-2v-16c0,-1.104 0.896,-2 2,-2c1.104,0 2,0.896 2,2v16c0,1.104 -0.896,2 -2,2zM24,26c-1.104,0 -2,-0.896 -2,-2v-16c0,-1.104 0.896,-2 2,-2c1.104,0 2,0.896 2,2v16c0,1.104 -0.896,2 -2,2zM8,26c-1.104,0 -2,-0.896 -2,-2v-16c0,-1.104 0.896,-2 2,-2c1.104,0 2,0.896 2,2v16c0,1.104 -0.896,2 -2,2z"
-                    ></path>
-                  </g>
-                </g>
-              </svg>
-            </li>
-            <li class="table__body-item optional">0x0...0</li>
+            <li class="table__body-item optional">0x0...000</li>
             <li class="table__body-item optional">Ethereum</li>
             <li class="table__body-item">2 ETH</li>
-            <li class="table__body-item">Inactive</li>
+            <li class="table__body-item action">Inactive</li>
+            <li class="show-row-action">
+              <i class="burger"> </i>
+            </li>
           </div>
 
           <div class="card table__row-action">
-            <h3 class="card__header">Hey</h3>
+            <h3 class="card__header">Pending Sale</h3>
             <p class="card__text">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Ipsam
-              error at rerum dolore obcaecati a mollitia consectetur expedita
-              quas dolores.
+              Wallet address: 0x0341235421230405305053231
+              <br />
+              Platform: Ethereum
+              <br />
+              Price: 2 ETH
+              <br />
+              Status: Inactive
+              <br />
             </p>
-            <button class="btn btn--primary">Trade</button>
+            <button class="btn btn--primary">Complete</button>
+          </div>
+        </ul>
+        <ul class="table__row action-hidden">
+          <div class="table__row-details">
+            <li class="table__body-item optional">0x0...000</li>
+            <li class="table__body-item optional">Ethereum</li>
+            <li class="table__body-item">2 ETH</li>
+            <li class="table__body-item action">Inactive</li>
+            <li class="show-row-action">
+              <i class="burger"> </i>
+            </li>
+          </div>
+
+          <div class="card table__row-action">
+            <h3 class="card__header">Pending Sale</h3>
+            <p class="card__text">
+              Wallet address: 0x0341235421230405305053231
+              <br />
+              Platform: Ethereum
+              <br />
+              Price: 2 ETH
+              <br />
+              Status: Inactive
+              <br />
+            </p>
+            <button class="btn btn--primary">Complete</button>
+          </div>
+        </ul>
+        <ul class="table__row action-hidden">
+          <div class="table__row-details">
+            <li class="table__body-item optional">0x0...000</li>
+            <li class="table__body-item optional">Ethereum</li>
+            <li class="table__body-item">2 ETH</li>
+            <li class="table__body-item action">Inactive</li>
+            <li class="show-row-action">
+              <i class="burger"> </i>
+            </li>
+          </div>
+
+          <div class="card table__row-action">
+            <h3 class="card__header">Pending Sale</h3>
+            <p class="card__text">
+              Wallet address: 0x0341235421230405305053231
+              <br />
+              Platform: Ethereum
+              <br />
+              Price: 2 ETH
+              <br />
+              Status: Inactive
+              <br />
+            </p>
+            <button class="btn btn--primary">Complete</button>
           </div>
         </ul>
       </div>

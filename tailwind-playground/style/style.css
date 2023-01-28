@@ -250,6 +250,7 @@ body {
 
 .table__header-item {
   margin: 0 1rem;
+  font-size: 2.5rem;
 }
 
 .table__row {
@@ -282,6 +283,7 @@ body {
   padding: 0;
   border: 0;
   opacity: 0;
+  margin: 0;
 }
 
 .row-action--expanded .card {
@@ -291,13 +293,13 @@ body {
   opacity: 1;
 }
 
-.show-row-action svg {
-  transition: rotate 0.2s ease-in-out;
-  rotate: 90deg;
+.row-action--expanded .burger {
+  rotate: 0deg;
+  filter: brightness(1.1);
 }
 
-.row-action--expanded .show-row-action svg {
-  rotate: 0deg;
+.table__row.row-action--expanded li {
+  color: rgba(255, 255, 255, 1);
 }
 
 .table__row-details {
@@ -308,7 +310,32 @@ body {
   padding: 2rem;
 }
 
-@media screen and (max-width: 450px) {
+.table__body-item {
+  transition: color 0.2s ease-in-out;
+}
+
+.table__row:hover .table__body-item {
+  color: rgba(255, 255, 255, 1);
+  font-weight: 600;
+}
+
+.table__body-item:hover {
+  cursor: pointer;
+}
+
+.burger {
+  transition: rotate 0.2s ease-in-out;
+  content: url("../images/burger.svg");
+  rotate: 90deg;
+  user-select: none;
+  filter: brightness(0.8);
+}
+
+.burger:hover {
+  cursor: pointer;
+}
+
+@media screen and (max-width: 550px) {
   .table .optional {
     display: none;
   }
@@ -335,4 +362,15 @@ body {
   .table {
     margin: 3rem 20rem;
   }
+}
+
+.tick::after {
+  content: url("../images/tick.svg");
+  position: relative;
+  left: 3px;
+  top: 1px;
+}
+
+.action {
+  width: 96px;
 }
