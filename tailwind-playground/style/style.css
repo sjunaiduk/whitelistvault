@@ -236,7 +236,7 @@ body {
   margin: 4rem;
   font-size: 2rem;
   overflow: auto;
-  background-color: #00000038;
+  background-color: #35353525;
   border-radius: 20px;
 }
 
@@ -269,6 +269,8 @@ body {
 
 .table__row .card {
   transition: all 0.2s ease-in-out;
+  background-color: #4342421d;
+  overflow: auto;
 }
 
 .table__row.action-hidden .card {
@@ -277,7 +279,8 @@ body {
   padding: 0;
   border: 0;
   opacity: 0;
-  margin: 0;
+
+  padding-left: 10rem;
 }
 
 .row-action--expanded .card {
@@ -301,4 +304,16 @@ body {
   flex-grow: 1;
   display: flex;
   justify-content: space-around;
+  align-items: center;
+  padding: 2rem;
+}
+
+@media screen and (max-width: 450px) {
+  .table .optional {
+    display: none;
+  }
+
+  .table .card {
+    margin: 0;
+  }
 }
