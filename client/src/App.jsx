@@ -1,5 +1,3 @@
-import "./App.css";
-
 import { ConnectWallet } from "./components/ConnectWallet";
 import {
   AcceptSale,
@@ -9,12 +7,15 @@ import {
 } from "./components/SalesComponents";
 import { useEth } from "./contexts/EthContext";
 
+import "./testStyle.css";
+
 function App() {
   const { state } = useEth();
 
   return (
     <div id="App">
-      <div className="container">
+      <p className="colorRed">TEST </p>
+      <div className="bg-green-500">
         <ConnectWallet />
         {state.accounts?.length > 0 && (
           <>
