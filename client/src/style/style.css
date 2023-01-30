@@ -337,6 +337,12 @@ body {
   cursor: pointer;
 }
 
+.table-address {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media screen and (max-width: 550px) {
   .table .optional {
     display: none;

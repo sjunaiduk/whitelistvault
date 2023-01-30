@@ -25,16 +25,22 @@ export const ViewSales = ({ sellerAddress }) => {
     const saleData = await state.contract.methods
       .getSalesForSeller(sellerAddress)
       .call();
-    console.log(saleData);
+    console.log(`Got sales for ${sellerAddress}:`, saleData);
     setSales(saleData);
   };
 
   useEffect(() => {
-    fetchAndSetSales();
+    setSales(null);
   }, [state]);
 
   useEffect(() => {
     let table = document.getElementById("dim");
+    console.log(
+      `Running javascript to set event handlers on table:`,
+      table,
+      `sales value:`,
+      sales
+    );
 
     document.querySelectorAll(".table__row-details").forEach(function (row) {
       row.addEventListener("click", function () {
@@ -63,6 +69,8 @@ export const ViewSales = ({ sellerAddress }) => {
         row.parentElement.classList.toggle("row-action--expanded");
         row.parentElement.classList.toggle("action-hidden");
       });
+
+      console.log(`Event listener on row:`, row);
     });
   }, [sales]);
 
@@ -82,12 +90,11 @@ export const ViewSales = ({ sellerAddress }) => {
           <>
             <div className="table__body">
               {sales ? (
-                sales.map((sale) => (
-                  <ul className="table__row action-hidden">
+                sales.map((sale, index) => (
+                  <ul className="table__row action-hidden" key={index}>
                     <div className="table__row-details" key={sale}>
-                      <li className="table__body-item optional">
-                        {" "}
-                        {sale.buyerAddress.substring(0, 6)}...
+                      <li className="table__body-item table-address optional">
+                        {sale.buyerAddress}
                       </li>
                       <li className="table__body-item optional">
                         {sale.presalePlatform}
@@ -95,14 +102,23 @@ export const ViewSales = ({ sellerAddress }) => {
                       <li className="table__body-item">
                         {sale.price * 10 ** -18} BNB
                       </li>
-                      <li className="table__body-item action tick">
-                        {!sale.cancelled &&
-                        sale.buyerAcceptedSaleAndSentBnbToContract
-                          ? sale.moneySentToSellerByContract
-                            ? "Success"
-                            : "Waiting for Seller"
-                          : "Waiting for Buyer"}
-                      </li>
+                      {!sale.cancelled &&
+                      sale.buyerAcceptedSaleAndSentBnbToContract ? (
+                        sale.moneySentToSellerByContract ? (
+                          <li className="table__body-item action tick">
+                            Success
+                          </li>
+                        ) : (
+                          <li className="table__body-item action ">
+                            Waiting For Seller
+                          </li>
+                        )
+                      ) : (
+                        <li className="table__body-item action ">
+                          Waiting For Buyer
+                        </li>
+                      )}
+
                       <li className="show-row-action">
                         <i className="burger"> </i>
                       </li>
