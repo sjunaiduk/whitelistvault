@@ -153,6 +153,144 @@ export const ViewSales = ({ sellerAddress }) => {
   );
 };
 
+export const ViewSalesFromBuyer = ({ buyersAddress }) => {
+  const { state } = useEth();
+
+  const [sales, setSales] = useState(null);
+
+  const fetchAndSetSales = async () => {
+    console.log(`Fetching sales for buyer ${buyersAddress}...`);
+    const saleData = await state.contract.methods
+      .getSalesForBuyer(buyersAddress)
+      .call();
+    console.log(`Got sales for ${buyersAddress}:`, saleData);
+    setSales(saleData);
+  };
+
+  useEffect(() => {
+    setSales(null);
+  }, [state]);
+
+  useEffect(() => {
+    let table = document.getElementById("dim");
+    console.log(
+      `Running javascript to set event handlers on table:`,
+      table,
+      `sales value:`,
+      sales
+    );
+
+    document.querySelectorAll(".table__row-details").forEach(function (row) {
+      row.addEventListener("click", function () {
+        document
+          .querySelectorAll(".row-action--expanded")
+          .forEach(function (el) {
+            if (el === row.parentElement) return; // skip the current element (the one we just clicked on
+            el.classList.toggle("row-action--expanded");
+            el.classList.toggle("action-hidden");
+          });
+
+        if (!row.parentElement.classList.contains("row-action--expanded")) {
+          // make table li font color dim
+          document
+            .querySelectorAll(".table__row-details")
+            .forEach(function (el) {
+              el.style.color = "rgba(255, 255, 255, 0.3)";
+            });
+        } else {
+          document
+            .querySelectorAll(".table__row-details")
+            .forEach(function (el) {
+              el.style.color = "rgba(255, 255, 255, 0.8)";
+            });
+        }
+        row.parentElement.classList.toggle("row-action--expanded");
+        row.parentElement.classList.toggle("action-hidden");
+      });
+
+      console.log(`Event listener on row:`, row);
+    });
+  }, [sales]);
+
+  return (
+    <div>
+      <h1>Sales:</h1>
+      <div className="table" id="dim">
+        <ul className="table__header">
+          <li className="table__header-item optional">Address</li>
+          <li className="table__header-item optional">Platform</li>
+          <li className="table__header-item">Price</li>
+          <li className="table__header-item">Status</li>
+          <li className="table__header-item optional">Action</li>
+        </ul>
+
+        {state.accounts?.length ? (
+          <>
+            <div className="table__body">
+              {sales ? (
+                sales.map((sale, index) => (
+                  <ul className="table__row action-hidden" key={index}>
+                    <div className="table__row-details" key={sale}>
+                      <li className="table__body-item table-address optional">
+                        {sale.buyerAddress}
+                      </li>
+                      <li className="table__body-item optional">
+                        {sale.presalePlatform}
+                      </li>
+                      <li className="table__body-item">
+                        {sale.price * 10 ** -18} BNB
+                      </li>
+                      {!sale.cancelled &&
+                      sale.buyerAcceptedSaleAndSentBnbToContract ? (
+                        sale.moneySentToSellerByContract ? (
+                          <li className="table__body-item action tick">
+                            Success
+                          </li>
+                        ) : (
+                          <li className="table__body-item action ">
+                            Waiting For Seller
+                          </li>
+                        )
+                      ) : (
+                        <li className="table__body-item action ">
+                          Waiting For Buyer
+                        </li>
+                      )}
+
+                      <li className="show-row-action">
+                        <i className="burger"> </i>
+                      </li>
+                    </div>
+                    <div className="card table__row-action">
+                      <h3 className="card__header">Pending Sale</h3>
+                      <p className="card__text">
+                        Wallet address: 0x0341235421230405305053231
+                        <br />
+                        Platform: Ethereum
+                        <br />
+                        Price: 2 ETH
+                        <br />
+                        Status: Inactive
+                        <br />
+                      </p>
+                      <button className="btn btn--primary">Complete</button>
+                    </div>
+                  </ul>
+                ))
+              ) : (
+                <p>No sales yet.</p>
+              )}
+              <button onClick={fetchAndSetSales}>Get Sales</button>
+            </div>
+          </>
+        ) : (
+          <h3>You are not connected.</h3>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const AcceptSale = () => {
   const { state } = useEth();
 
