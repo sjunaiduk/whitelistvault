@@ -7,15 +7,15 @@ import {
 } from "./components/SalesComponents";
 import { useEth } from "./contexts/EthContext";
 
-import "./testStyle.css";
+import "./index.css";
 
 function App() {
   const { state } = useEth();
 
   return (
     <div id="App">
-      <p className="colorRed">TEST </p>
-      <div className="bg-green-500">
+      <p>TEST </p>
+      <div>
         <ConnectWallet />
         {state.accounts?.length > 0 && (
           <>
