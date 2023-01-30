@@ -7,7 +7,8 @@ import {
 } from "./components/SalesComponents";
 import { useEth } from "./contexts/EthContext";
 
-import "./index.css";
+import "./style/normalize.css";
+import "./style/style.css";
 
 function App() {
   const { state } = useEth();
@@ -15,7 +16,7 @@ function App() {
   return (
     <div id="App">
       <p>TEST </p>
-      <div>
+      <>
         <ConnectWallet />
         {state.accounts?.length > 0 && (
           <>
@@ -25,7 +26,7 @@ function App() {
             <CompleteSale />
           </>
         )}
-      </div>
+      </>
     </div>
   );
 }

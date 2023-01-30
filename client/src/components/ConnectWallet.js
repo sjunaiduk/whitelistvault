@@ -4,22 +4,20 @@ export const ConnectWallet = () => {
   const { tryInit, state, logout } = useEth();
 
   return (
-    <div>
+    <>
       {state.accounts?.length ? (
-        <div>
-          <button>{state.accounts[0]}</button>
+        <>
+          <p id="walletAddress">{state.accounts[0]}</p>
           <button type="button" onClick={logout}>
             Logout
           </button>
-        </div>
+        </>
       ) : (
-        <div>
+        <>
           <p>Not Connected</p>
           <button onClick={tryInit}>Connect Wallet</button>
-        </div>
+        </>
       )}
-
-      <p>{state?.accounts}</p>
-    </div>
+    </>
   );
 };

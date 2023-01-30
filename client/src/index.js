@@ -1,8 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./index.css";
+import "./style/normalize.css";
+import "./style/style.css";
+
 import App from "./App";
-import { EthContext, EthProvider, useEth } from "./contexts/EthContext";
+import { EthProvider } from "./contexts/EthContext";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(

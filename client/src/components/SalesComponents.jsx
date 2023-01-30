@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useEffect } from "react";
 import { useEth } from "../contexts/EthContext";
 
 /*
@@ -19,49 +20,119 @@ export const ViewSales = ({ sellerAddress }) => {
 
   const [sales, setSales] = useState(null);
 
-  const getSales = async () => {
+  const fetchAndSetSales = async () => {
     console.log(`Fetching sales for ${sellerAddress}...`);
     const saleData = await state.contract.methods
       .getSalesForSeller(sellerAddress)
       .call();
+    console.log(saleData);
     setSales(saleData);
   };
+
+  useEffect(() => {
+    fetchAndSetSales();
+  }, [state]);
+
+  useEffect(() => {
+    let table = document.getElementById("dim");
+
+    document.querySelectorAll(".table__row-details").forEach(function (row) {
+      row.addEventListener("click", function () {
+        document
+          .querySelectorAll(".row-action--expanded")
+          .forEach(function (el) {
+            if (el === row.parentElement) return; // skip the current element (the one we just clicked on
+            el.classList.toggle("row-action--expanded");
+            el.classList.toggle("action-hidden");
+          });
+
+        if (!row.parentElement.classList.contains("row-action--expanded")) {
+          // make table li font color dim
+          document
+            .querySelectorAll(".table__row-details")
+            .forEach(function (el) {
+              el.style.color = "rgba(255, 255, 255, 0.3)";
+            });
+        } else {
+          document
+            .querySelectorAll(".table__row-details")
+            .forEach(function (el) {
+              el.style.color = "rgba(255, 255, 255, 0.8)";
+            });
+        }
+        row.parentElement.classList.toggle("row-action--expanded");
+        row.parentElement.classList.toggle("action-hidden");
+      });
+    });
+  }, [sales]);
+
   return (
     <div>
       <h1>Sales:</h1>
-      {state.accounts?.length ? (
-        <>
-          {sales ? (
-            <ul>
-              {sales.map((sale) => (
-                <li key={sale}>
-                  <p>Presale Address: {sale.presaleAddress}</p>
-                  <p>Buyer Address: {sale.buyerAddress}</p>
-                  <p>
-                    Buyer Accepted Sale And Sent BNB To Contract:{" "}
-                    {sale.buyerAcceptedSaleAndSentBnbToContract
-                      ? "True"
-                      : "False"}
-                  </p>
-                  <p>Cancelled: {sale.cancelled ? "True" : "False"}</p>
-                  <p>Wallet Added: {sale.walletAdded ? "True" : "False"}</p>
-                  <p>Presale Platform: {sale.presalePlatform}</p>
-                  <p>
-                    Money Sent To Seller By Contract:{" "}
-                    {sale.moneySentToSellerByContract ? "True" : "False"}
-                  </p>
-                  <p>Price: {sale.price}</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No sales yet.</p>
-          )}
-          <button onClick={getSales}>Get Sales</button>
-        </>
-      ) : (
-        <h3>You are not connected.</h3>
-      )}
+      <div className="table" id="dim">
+        <ul className="table__header">
+          <li className="table__header-item optional">Address</li>
+          <li className="table__header-item optional">Platform</li>
+          <li className="table__header-item">Price</li>
+          <li className="table__header-item">Status</li>
+          <li className="table__header-item optional">Action</li>
+        </ul>
+
+        {state.accounts?.length ? (
+          <>
+            <div className="table__body">
+              {sales ? (
+                sales.map((sale) => (
+                  <ul className="table__row action-hidden">
+                    <div className="table__row-details" key={sale}>
+                      <li className="table__body-item optional">
+                        {" "}
+                        {sale.buyerAddress.substring(0, 6)}...
+                      </li>
+                      <li className="table__body-item optional">
+                        {sale.presalePlatform}
+                      </li>
+                      <li className="table__body-item">
+                        {sale.price * 10 ** -18} BNB
+                      </li>
+                      <li className="table__body-item action tick">
+                        {!sale.cancelled &&
+                        sale.buyerAcceptedSaleAndSentBnbToContract
+                          ? sale.moneySentToSellerByContract
+                            ? "Success"
+                            : "Waiting for Seller"
+                          : "Waiting for Buyer"}
+                      </li>
+                      <li className="show-row-action">
+                        <i className="burger"> </i>
+                      </li>
+                    </div>
+                    <div className="card table__row-action">
+                      <h3 className="card__header">Pending Sale</h3>
+                      <p className="card__text">
+                        Wallet address: 0x0341235421230405305053231
+                        <br />
+                        Platform: Ethereum
+                        <br />
+                        Price: 2 ETH
+                        <br />
+                        Status: Inactive
+                        <br />
+                      </p>
+                      <button className="btn btn--primary">Complete</button>
+                    </div>
+                  </ul>
+                ))
+              ) : (
+                <p>No sales yet.</p>
+              )}
+              <button onClick={fetchAndSetSales}>Get Sales</button>
+            </div>
+          </>
+        ) : (
+          <h3>You are not connected.</h3>
+        )}
+      </div>
     </div>
   );
 };
