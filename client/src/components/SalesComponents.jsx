@@ -29,26 +29,28 @@ export const ViewSales = ({ sellerAddress }) => {
     setSales(saleData);
   };
 
-  const [refs, setRefs] = useState([]);
+  //const [refs, setRefs] = useState([]);
 
-  const collapseAllOtherRefs = (index) => {
-    console.log(`Collapsing all other refs...`);
-    console.log(`Refs length:`, refs.length);
-    for (let i = 0; i < refs.length; i++) {
-      if (i === index) continue;
+  const [expandedSaleIndex, setExpandedSaleIndex] = useState(null);
 
-      refs[i].current.classList.remove("row-action--expanded");
-      refs[i].current.classList.add("action-hidden");
-    }
-  };
+  // const collapseAllOtherRefs = (index) => {
+  //   console.log(`Collapsing all other refs...`);
+  //   console.log(`Refs length:`, refs.length);
+  //   for (let i = 0; i < refs.length; i++) {
+  //     if (i === index) continue;
 
-  useEffect(() => {
-    let refData = [];
-    for (let i = 0; i < sales?.length; i++) {
-      refData.push(React.createRef());
-    }
-    setRefs(refData);
-  }, [sales]);
+  //     refs[i].current.classList.remove("row-action--expanded");
+  //     refs[i].current.classList.add("action-hidden");
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   let refData = [];
+  //   for (let i = 0; i < sales?.length; i++) {
+  //     refData.push(React.createRef());
+  //   }
+  //   setRefs(refData);
+  // }, [sales]);
 
   useEffect(() => {
     setSales(null);
@@ -104,6 +106,14 @@ export const ViewSales = ({ sellerAddress }) => {
   //   p();
   // }, [sales]);
 
+  const handleRowClick = (index) => {
+    if (index === expandedSaleIndex) {
+      setExpandedSaleIndex(null);
+      return;
+    } else {
+      setExpandedSaleIndex(index);
+    }
+  };
   return (
     <div>
       <h1>Sales:</h1>
@@ -122,15 +132,21 @@ export const ViewSales = ({ sellerAddress }) => {
               {sales ? (
                 sales.map((sale, index) => (
                   <ul
-                    ref={refs[index]}
-                    className="table__row action-hidden"
+                    // ref={refs[index]}
+                    className={
+                      index === expandedSaleIndex
+                        ? " table__row row-action--expanded"
+                        : "table__row action-hidden "
+                    }
                     key={index}
-                    onClick={(e) => {
-                      e.currentTarget.classList.toggle("row-action--expanded");
-                      e.currentTarget.classList.toggle("action-hidden");
-                      console.log(`Row  ref ->`, refs[index].current);
-                      collapseAllOtherRefs(index);
-                    }}
+                    onClick={() => handleRowClick(index)}
+                    // onClick={(e) => {
+
+                    //   e.currentTarget.classList.toggle("row-action--expanded");
+                    //   e.currentTarget.classList.toggle("action-hidden");
+                    //   console.log(`Row  ref ->`, refs[index].current);
+                    //   collapseAllOtherRefs(index);
+                    // }}
                   >
                     <div className="table__row-details" key={sale}>
                       <li className="table__body-item table-address optional">
