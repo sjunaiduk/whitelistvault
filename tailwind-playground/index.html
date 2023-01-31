@@ -18,41 +18,30 @@
   </head>
 
   <body>
-    <div>
-      <h1>Sales:</h1>
-      <div class="table" id="dim">
-        <ul class="table__header">
-          <li class="table__header-item optional">Address</li>
-          <li class="table__header-item optional">Platform</li>
-          <li class="table__header-item">Price</li>
-          <li class="table__header-item">Status</li>
-          <li class="table__header-item optional">Action</li>
-        </ul>
-        <div class="table__body">
-          <ul class="table__row action-hidden">
-            <div
-              class="table__row-details"
-              style="color: rgba(255, 255, 255, 0.8)"
-            >
-              <li class="table__body-item optional">0x00aB...</li>
-              <li class="table__body-item optional">Pink</li>
-              <li class="table__body-item">1 BNB</li>
-              <li class="table__body-item action tick">Waiting for Buyer</li>
-              <li class="show-row-action"><i class="burger"> </i></li>
-            </div>
-            <div class="card table__row-action">
-              <h3 class="card__header">Pending Sale</h3>
-              <p class="card__text">
-                Wallet address: 0x0341235421230405305053231<br />Platform:
-                Ethereum<br />Price: 2 ETH<br />Status: Inactive<br />
-              </p>
-              <button class="btn btn--primary">Complete</button>
-            </div>
-          </ul>
-          <button>Get Sales</button>
-        </div>
+    <form class="card form-group">
+      <h3 class="card__header">Sale Completion</h3>
+
+      <div class="form-group__control">
+        <label class="form-group__label cross" for="seller"
+          >Sellers Address</label
+        >
+        <input class="form-group__input" type="text" id="seller" />
       </div>
-    </div>
+      <div class="form-group__control">
+        <label class="form-group__label tick" for="presale"
+          >Presale Wallet</label
+        >
+        <input class="form-group__input" type="text" id="presale" />
+      </div>
+      <div class="form-group__control">
+        <label class="form-group__label tick" for="walletToAdd"
+          >Wallet To Add</label
+        >
+        <input class="form-group__input" type="text" id="walletToAdd" />
+      </div>
+      <button class="btn btn--primary" type="submit">Complete Sale</button>
+    </form>
+
     <script src="main.js"></script>
   </body>
 </html>

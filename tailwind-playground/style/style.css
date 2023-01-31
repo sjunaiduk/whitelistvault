@@ -63,18 +63,24 @@ body {
   color: #fff;
   border-radius: 20px;
   font-weight: bold;
+  transition: background-position 0.4s ease-in;
 }
 
 .btn:hover {
   cursor: pointer;
+  background-position: left;
 }
 
 .btn--primary {
-  background-image: linear-gradient(to right, #ff5bca 55%, #f30baa);
+  background-image: linear-gradient(to right, #fe4bc6, #f30baa 40%);
+  background-position: right;
+  background-size: 300%;
 }
 
 .btn--secondary {
-  background-image: linear-gradient(to right, #6c0156, #840163 60%);
+  background-image: linear-gradient(to right, #b3238f, #840163 50%);
+  background-position: right;
+  background-size: 300%;
 }
 
 .btn--large {
@@ -96,13 +102,13 @@ body {
   }
 }
 
-.btn--primary:hover {
+/* .btn--primary:hover {
   background-image: linear-gradient(to right, #ff73d3 55%, #f71eb2);
 }
 
 .btn--secondary:hover {
   background-image: linear-gradient(to right, #7f0767, #a0087a 60%);
-}
+} */
 
 /* Nav bar */
 .navbar {
@@ -337,6 +343,12 @@ body {
   cursor: pointer;
 }
 
+.table-address {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media screen and (max-width: 550px) {
   .table .optional {
     display: none;
@@ -374,8 +386,65 @@ body {
   top: 1px;
 }
 
+.cross::after {
+  content: url("../images/cross.svg");
+  position: relative;
+  left: 5px;
+  top: 1px;
+  width: 20px;
+  height: 20px;
+}
+
 /* Form Panels */
 
-form {
+.form-group {
   overflow: auto;
+  display: flex;
+  flex-direction: column;
+  margin: 1rem auto;
+  max-width: fit-content;
+  padding: 3rem;
+}
+
+.form-group__label {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.form-group__input {
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.23);
+  background-color: #35353525;
+  font-size: 2rem;
+  color: rgba(255, 255, 255, 0.8);
+  outline: none;
+}
+
+.form-group__control:first-of-type {
+  margin-top: 3rem;
+}
+
+.form-group__control {
+  margin-top: 1rem;
+}
+
+.form-group .btn {
+  padding: 1rem 2rem;
+  text-transform: uppercase;
+}
+
+.form-group .card__header {
+  margin: 0 auto;
+}
+
+@media screen and (min-width: 768px) {
+  .form-group {
+    max-width: 500px;
+  }
+
+  .form-group__input {
+    width: 100%;
+  }
 }

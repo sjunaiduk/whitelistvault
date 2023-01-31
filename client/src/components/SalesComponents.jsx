@@ -506,3 +506,80 @@ export const CompleteSale = () => {
     </div>
   );
 };
+
+// function cancelSale(
+//   address presale,
+//   address walletToAdd,
+//   address sellersAddress
+
+export const CancelSale = () => {
+  const { state } = useEth();
+
+  const [sellerAddress, setSellerAddress] = useState("");
+  const [presaleAddress, setPresaleAddress] = useState("");
+  const [walletToAdd, setWalletToAdd] = useState("");
+
+  const isInvalidAddress = (address) => {
+    const invalid = !state.web3.utils.isAddress(address);
+    console.log(`Invalid address: ${invalid}`);
+    return invalid;
+  };
+
+  const cancelSale = async () => {
+    console.log(
+      `Cancellling sale for seller ${sellerAddress}, presale ${presaleAddress} and wallet ${walletToAdd}...`
+    );
+    console.log(`Accounts: ${state.accounts}`);
+    await state.contract.methods
+      .cancelSale(presaleAddress, walletToAdd, sellerAddress)
+      .send({ from: state.accounts[0] });
+  };
+  return (
+    <div>
+      <h1>Sales:</h1>
+      {state.accounts?.length ? (
+        <>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
+          >
+            <input
+              required
+              type="text"
+              placeholder="Wallet to Add (buyer)"
+              value={walletToAdd}
+              onChange={(e) => setWalletToAdd(e.target.value)}
+            />
+            <input
+              required
+              type="text"
+              placeholder="Presale Address"
+              value={presaleAddress}
+              onChange={(e) => setPresaleAddress(e.target.value)}
+            />
+            <input
+              required
+              type="text"
+              placeholder="Seller"
+              value={sellerAddress}
+              onChange={(e) => setSellerAddress(e.target.value)}
+            />
+            <button
+              disabled={
+                isInvalidAddress(walletToAdd) ||
+                isInvalidAddress(presaleAddress) ||
+                isInvalidAddress(sellerAddress)
+              }
+              onClick={cancelSale}
+            >
+              Cancel Sale
+            </button>
+          </form>
+        </>
+      ) : (
+        <h3>You are not connected.</h3>
+      )}
+    </div>
+  );
+};
