@@ -29,50 +29,80 @@ export const ViewSales = ({ sellerAddress }) => {
     setSales(saleData);
   };
 
+  const [refs, setRefs] = useState([]);
+
+  const collapseAllOtherRefs = (index) => {
+    console.log(`Collapsing all other refs...`);
+    console.log(`Refs length:`, refs.length);
+    for (let i = 0; i < refs.length; i++) {
+      if (i === index) continue;
+
+      refs[i].current.classList.remove("row-action--expanded");
+      refs[i].current.classList.add("action-hidden");
+    }
+  };
+
+  useEffect(() => {
+    let refData = [];
+    for (let i = 0; i < sales?.length; i++) {
+      refData.push(React.createRef());
+    }
+    setRefs(refData);
+  }, [sales]);
+
   useEffect(() => {
     setSales(null);
   }, [state]);
 
-  useEffect(() => {
-    let table = document.getElementById("dim");
-    console.log(
-      `Running javascript to set event handlers on table:`,
-      table,
-      `sales value:`,
-      sales
-    );
+  // useEffect(() => {
+  //   function p() {
+  //     let table = document.getElementById("dim");
+  //     console.log(
+  //       `Running javascript to set event handlers on table:`,
+  //       table,
+  //       `sales value:`,
+  //       sales
+  //     );
 
-    document.querySelectorAll(".table__row-details").forEach(function (row) {
-      row.addEventListener("click", function () {
-        document
-          .querySelectorAll(".row-action--expanded")
-          .forEach(function (el) {
-            if (el === row.parentElement) return; // skip the current element (the one we just clicked on
-            el.classList.toggle("row-action--expanded");
-            el.classList.toggle("action-hidden");
-          });
+  //     const rowDetails = document.querySelectorAll(".table__row-details");
+  //     console.log(`rowDetails:`, rowDetails);
+  //     for (let i = 0; i < rowDetails.length; i++) {
+  //       const row = rowDetails[i];
+  //       row.addEventListener("click", function () {
+  //         console.log(`Clicked on row:`, row);
+  //         document
+  //           .querySelectorAll(".row-action--expanded")
+  //           .forEach(function (el) {
+  //             if (el === row.parentElement) return; // skip the current element (the one we just clicked on
+  //             el.classList.toggle("row-action--expanded");
+  //             el.classList.toggle("action-hidden");
+  //           });
 
-        if (!row.parentElement.classList.contains("row-action--expanded")) {
-          // make table li font color dim
-          document
-            .querySelectorAll(".table__row-details")
-            .forEach(function (el) {
-              el.style.color = "rgba(255, 255, 255, 0.3)";
-            });
-        } else {
-          document
-            .querySelectorAll(".table__row-details")
-            .forEach(function (el) {
-              el.style.color = "rgba(255, 255, 255, 0.8)";
-            });
-        }
-        row.parentElement.classList.toggle("row-action--expanded");
-        row.parentElement.classList.toggle("action-hidden");
-      });
+  //         if (!row.parentElement.classList.contains("row-action--expanded")) {
+  //           // make table li font color dim
+  //           document
+  //             .querySelectorAll(".table__row-details")
+  //             .forEach(function (el) {
+  //               el.style.color = "rgba(255, 255, 255, 0.3)";
+  //             });
+  //         } else {
+  //           document
+  //             .querySelectorAll(".table__row-details")
+  //             .forEach(function (el) {
+  //               el.style.color = "rgba(255, 255, 255, 0.8)";
+  //             });
+  //         }
+  //         console.log(`Toggling row:`, row.parentElement);
+  //         row.parentElement.classList.toggle("row-action--expanded");
+  //         row.parentElement.classList.toggle("action-hidden");
+  //         console.log(`Toggled row:`, row.parentElement);
+  //       });
+  //       console.log(`Added event listener to row:`, row);
+  //     }
+  //   }
 
-      console.log(`Event listener on row:`, row);
-    });
-  }, [sales]);
+  //   p();
+  // }, [sales]);
 
   return (
     <div>
@@ -91,7 +121,17 @@ export const ViewSales = ({ sellerAddress }) => {
             <div className="table__body">
               {sales ? (
                 sales.map((sale, index) => (
-                  <ul className="table__row action-hidden" key={index}>
+                  <ul
+                    ref={refs[index]}
+                    className="table__row action-hidden"
+                    key={index}
+                    onClick={(e) => {
+                      e.currentTarget.classList.toggle("row-action--expanded");
+                      e.currentTarget.classList.toggle("action-hidden");
+                      console.log(`Row  ref ->`, refs[index].current);
+                      collapseAllOtherRefs(index);
+                    }}
+                  >
                     <div className="table__row-details" key={sale}>
                       <li className="table__body-item table-address optional">
                         {sale.buyerAddress}
