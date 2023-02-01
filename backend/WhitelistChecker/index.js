@@ -9,7 +9,7 @@ const web3 = new Web3(
 const abi = require("./pinksale/abi.json");
 
 // get the contract address
-const contractAddress = "0x4Fb131079b021Ad52D792a95e9E9465AcB160d70";
+const contractAddress = "0x447cE639254D38009377507E23D0D581A6Bff15E";
 
 const user = `0x744365e7c03074e5dA11FC57C8b649bc5E6161a1`;
 
@@ -72,7 +72,7 @@ async function manualWhitelistCheck() {
   }
 }
 
-//manualWhitelistCheck();
+manualWhitelistCheck();
 
 // start time
 
