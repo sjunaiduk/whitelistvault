@@ -9,28 +9,32 @@ const web3 = new Web3(
 const abi = require("./pinksale/abi.json");
 
 // get the contract address
-const contractAddress = "0x447cE639254D38009377507E23D0D581A6Bff15E";
+const contractAddress = "0x4Fb131079b021Ad52D792a95e9E9465AcB160d70";
 
-const user = `0x999999dB8a4aB0BC9Ad1d0dBcA5c77a8D28cc258`;
+const user = `0x744365e7c03074e5dA11FC57C8b649bc5E6161a1`;
 
 // create the contract instance
 const contract = new web3.eth.Contract(abi, contractAddress);
 
 // check if the address is whitelisted
 
-// contract.methods
-//   .isUserWhitelisted(user)
-//   .call()
-//   .then((result) => {
-//     console.log(result);
-//   });
+contract.methods
+  .isUserWhitelisted(user)
+  .call()
+  .then((result) => {
+    console.log(result);
+  });
 
-// contract.methods
-//   .getWhitelistedUsers(0, 99)
-//   .call()
-//   .then((result) => {
-//     console.log(result);
-//   });
+const rawCall = contract.methods.getWhitelistedUsers(0, 9).encodeABI();
+
+console.log(rawCall);
+
+contract.methods
+  .getWhitelistedUsers(0, 9)
+  .call()
+  .then((result) => {
+    console.log(result);
+  });
 
 //store11 is start time
 // Stor12 is when it finishes
@@ -70,13 +74,23 @@ async function manualWhitelistCheck() {
 
 //manualWhitelistCheck();
 
-// doesnt work.........
+// start time
 
-var compositeKey = web3.utils.soliditySha3({
-  type: "uint256",
-  value: 39,
+web3.eth.getStorageAt(contractAddress, 11).then((r) => {
+  //convert hex to decimal
+  //convert to date
+
+  var date = new Date(parseInt(r, 16) * 1000);
+  console.log(date);
 });
 
-console.log(compositeKey);
+// doesnt work.........
 
-web3.eth.getStorageAt(contractAddress, compositeKey).then(console.log);
+// var compositeKey = web3.utils.soliditySha3({
+//   type: "uint256",
+//   value: 39,
+// });
+
+// console.log(compositeKey);
+
+// web3.eth.getStorageAt(contractAddress, compositeKey).then(console.log);
