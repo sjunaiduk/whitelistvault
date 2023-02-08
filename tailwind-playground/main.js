@@ -24,3 +24,25 @@ document.querySelectorAll(".table__row-details").forEach(function (row) {
 });
 
 // if any other element is currently expanded, collapse it
+
+// document.querySelectorAll(".navbar").forEach(function (el) {
+//   el.addEventListener("click", function () {
+//     el.classList.toggle("navbar--expanded");
+//   });
+// });
+
+document
+  .getElementById("navbar-new__opener")
+  .addEventListener("click", function () {
+    document
+      .getElementById("navbar-new__content")
+      .classList.toggle("navbar-new__expanded");
+  });
+
+document
+  .getElementById("navbar-new__close")
+  .addEventListener("click", function () {
+    document
+      .getElementById("navbar-new__content")
+      .classList.toggle("navbar-new__expanded");
+  });
