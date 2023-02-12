@@ -64,7 +64,6 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
   };
   return (
     <div>
-      <h1>Sales:</h1>
       <div className="table" id="dim">
         <ul className="table__header">
           <li className="table__header-item optional">Address</li>
@@ -80,21 +79,12 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
               {sales ? (
                 sales.map((sale, index) => (
                   <ul
-                    // ref={refs[index]}
                     className={
                       index === expandedSaleIndex
                         ? " table__row row-action--expanded"
                         : "table__row action-hidden "
                     }
                     key={index}
-
-                    // onClick={(e) => {
-
-                    //   e.currentTarget.classList.toggle("row-action--expanded");
-                    //   e.currentTarget.classList.toggle("action-hidden");
-                    //   console.log(`Row  ref ->`, refs[index].current);
-                    //   collapseAllOtherRefs(index);
-                    // }}
                   >
                     <div
                       className="table__row-details"
@@ -140,7 +130,13 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
                   </ul>
                 ))
               ) : (
-                <p>No sales yet.</p>
+                <h3
+                  style={{
+                    textAlign: "center",
+                  }}
+                >
+                  No sales yet.
+                </h3>
               )}
               <button onClick={fetchAndSetSales}>Get Sales</button>
             </div>

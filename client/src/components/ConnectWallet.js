@@ -7,15 +7,15 @@ export const ConnectWallet = () => {
     <>
       {state.accounts?.length ? (
         <>
-          <p id="walletAddress">{state.accounts[0]}</p>
-          <button type="button" onClick={logout}>
+          <button className="btn btn--primary" type="button" onClick={logout}>
             Logout
           </button>
         </>
       ) : (
         <>
-          <p>Not Connected</p>
-          <button onClick={tryInit}>Connect Wallet</button>
+          <button className="btn btn--primary" onClick={tryInit}>
+            Connect
+          </button>
         </>
       )}
     </>
