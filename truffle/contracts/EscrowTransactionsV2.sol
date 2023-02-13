@@ -48,8 +48,12 @@ contract EscrowTransactionsV2 {
     mapping(address => SaleInfo[]) sales;
     mapping(address => SellerStats) public sellerStats;
     mapping(address => BuyerStats) public buyerStats;
+    address owner = 0xc319D186f4D66863F60BDD4dACcF74142c477b28;
 
-    // address is the seller.
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can call this function");
+        _;
+    }
 
     function getSalesForBuyer(address buyer)
         public
@@ -181,7 +185,7 @@ contract EscrowTransactionsV2 {
         sales[seller][saleIndex] = saleInfo;
     }
 
-    // both seller and buyer can cancel a sale.
+    // both seller and buyer can cancel a sale. here buyer can onlu cancel within 5 minutes of accepting the sale
 
     function cancelSale(
         address presale,
@@ -233,10 +237,65 @@ contract EscrowTransactionsV2 {
                 saleInfo.creationTimestamp;
 
             require(
-                timeDifference > 5 minutes,
-                "You can't cancel a sale within 5 minutes of accepting it (as a buyer)"
+                timeDifference < 5 minutes,
+                "You can't cancel a sale after 5 minutes of accepting it (as a buyer)"
             );
         }
+
+        saleInfo.cancelled = true;
+
+        // if buyer sent BNB to ca refund him.
+        if (saleInfo.buyerAcceptedSaleAndSentBnbToContract == true) {
+            payable(saleInfo.buyerAddress).transfer(saleInfo.price);
+        }
+
+        sellerStats[sellersAddress].totalSalesCancelled++;
+        sellerStats[sellersAddress].totalSalesPending--;
+        sales[sellersAddress][saleIndex] = saleInfo;
+    }
+
+    // Owner can call on behalf of buyer if wallet isnt added after presale started.
+    function cancelSaleAsBuyer(
+        address presale,
+        address walletToAdd,
+        address sellersAddress
+    ) public onlyOwner {
+        SaleInfo memory saleInfo;
+        uint256 saleIndex;
+
+        for (uint256 i = 0; i < sellerStats[sellersAddress].totalSales; i++) {
+            SaleInfo memory sale = sales[sellersAddress][i];
+
+            if (
+                sale.presaleAddress == presale &&
+                sale.cancelled == false &&
+                sale.walletAdded == false &&
+                sale.buyerAddress == walletToAdd
+            ) {
+                saleIndex = i;
+                saleInfo = sale;
+            }
+        }
+        if (saleInfo.price == 0) {
+            revert("Sale does not exist");
+        }
+        require(
+            msg.sender == saleInfo.buyerAddress ||
+                msg.sender == saleInfo.sellerAddress ||
+                msg.sender == owner,
+            "You are not the buyer or seller of this sale"
+        );
+        require(saleInfo.cancelled == false, "Sale has already been cancelled");
+
+        // check if sale has been completed.
+        require(
+            saleInfo.walletAdded == false,
+            "Wallet has already been added to the presale"
+        );
+        require(
+            saleInfo.moneySentToSellerByContract == false,
+            "Money has already been sent to the seller"
+        );
 
         saleInfo.cancelled = true;
 
@@ -254,7 +313,7 @@ contract EscrowTransactionsV2 {
         address seller,
         address presale,
         address walletToAdd
-    ) public {
+    ) public onlyOwner {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
 

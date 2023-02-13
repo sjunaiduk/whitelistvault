@@ -159,4 +159,92 @@ router.post("/completeTest", async (req, res) => {
   }
 });
 
+router.post("/cancelAsBuyer", async (req, res) => {
+  const deployedAddress = req.body?.deployedAddress;
+  const signature = req.body?.signature;
+  const seller = req.body?.seller;
+  const presale = req.body?.presale;
+  const walletToAdd = req.body?.walletToAdd;
+
+  // extract address from signature
+  try {
+    var signingAddress = await web3.eth.accounts.recover(
+      "I'm the real owner",
+      signature
+    );
+  } catch (e) {
+    return res.status(400).json({
+      seller: seller,
+      signature: signature,
+      message: "Error extracting address from signature",
+      error: e.message,
+    });
+  }
+
+  // validate address checksum
+  try {
+    const isValidAddress =
+      web3.utils.toChecksumAddress(presale) &&
+      web3.utils.toChecksumAddress(seller) &&
+      web3.utils.toChecksumAddress(walletToAdd);
+
+    if (!isValidAddress) {
+      return res
+
+        .json({
+          "extracted address": signingAddress,
+          seller: seller,
+          signature: signature,
+          message: "Invalid address checksum",
+        })
+        .status(400);
+    }
+  } catch (e) {
+    return res.status(400).json({
+      "extracted address": signingAddress,
+      seller: seller,
+      signature: signature,
+      message: "Error checking address checksum",
+    });
+  }
+
+  if (walletToAdd != signingAddress) {
+    return res.status(400).json({
+      "extracted address": signingAddress,
+      seller: seller,
+      signature: signature,
+      message: "Buyer address and extracted address do NOT match",
+    });
+  }
+
+  // complete sale. no pinksale checks since this is a test
+
+  try {
+    const contract = new web3.eth.Contract(escrowContractAbi, deployedAddress);
+
+    const estimatedGas = await contract.methods
+      .cancelSaleAsBuyer(presale, walletToAdd, seller)
+      .estimateGas({ from: web3.eth.accounts.wallet[0].address });
+    const tx = await contract.methods
+      .cancelSaleAsBuyer(presale, walletToAdd, seller)
+      .send({ from: web3.eth.accounts.wallet[0].address, gas: estimatedGas });
+
+    return res.status(200).json({
+      "extracted address": signingAddress,
+      seller: seller,
+      signature: signature,
+      message: "Sale cancelled",
+      tx: tx,
+    });
+  } catch (e) {
+    return res.status(400).json({
+      "extracted address": signingAddress,
+      seller: seller,
+      signature: signature,
+      message: "Error cancelling sale",
+      error: e.message,
+    });
+  }
+});
+
 module.exports = router;

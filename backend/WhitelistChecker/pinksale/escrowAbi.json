@@ -200,6 +200,29 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "presale",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "walletToAdd",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "sellersAddress",
+        "type": "address"
+      }
+    ],
+    "name": "cancelSaleAsBuyer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "seller",
         "type": "address"
       },
