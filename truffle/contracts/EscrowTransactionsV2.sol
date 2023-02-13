@@ -4,6 +4,7 @@ pragma solidity >=0.4.22 <0.9.0;
 
 struct SaleInfo {
     uint256 creationTimestamp;
+    uint256 buyerAcceptedTimestamp;
     address sellerAddress;
     address presaleAddress;
     address buyerAddress;
@@ -89,6 +90,7 @@ contract EscrowTransactionsV2 {
         uint256 price
     ) public {
         SaleInfo memory saleInfo = SaleInfo({
+            buyerAcceptedTimestamp: 0,
             creationTimestamp: block.timestamp,
             sellerAddress: msg.sender,
             presaleAddress: presale,
@@ -181,6 +183,7 @@ contract EscrowTransactionsV2 {
 
         payable(address(this)).transfer(msg.value);
         saleInfo.buyerAcceptedSaleAndSentBnbToContract = true;
+        saleInfo.buyerAcceptedTimestamp = block.timestamp;
 
         sales[seller][saleIndex] = saleInfo;
     }
@@ -234,7 +237,7 @@ contract EscrowTransactionsV2 {
         // He can only cancel within 5 minutes of accepting the sale.
         if (msg.sender == saleInfo.buyerAddress) {
             uint256 timeDifference = block.timestamp -
-                saleInfo.creationTimestamp;
+                saleInfo.buyerAcceptedTimestamp;
 
             require(
                 timeDifference < 5 minutes,
