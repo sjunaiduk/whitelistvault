@@ -98,7 +98,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
                         {sale.presalePlatform}
                       </li>
                       <li className="table__body-item">
-                        {sale.price * 10 ** -18} BNB
+                        {(sale.price * 10 ** -18).toFixed(2)} BNB
                       </li>
                       {!sale.cancelled ? (
                         sale.buyerAcceptedSaleAndSentBnbToContract ? (
@@ -126,7 +126,11 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
                         <i className="burger"> </i>
                       </li>
                     </div>
-                    <SalesCard sale={sale} isSeller={isSeller} />
+                    <SalesCard
+                      refetchSales={fetchAndSetSales}
+                      sale={sale}
+                      isSeller={isSeller}
+                    />
                   </ul>
                 ))
               ) : (
@@ -149,7 +153,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
   );
 };
 
-const SalesCard = ({ sale, isSeller = true }) => {
+const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   const { state } = useEth();
   const acceptSale = async (sellersAddress, presaleAddress) => {
     console.log(
@@ -161,6 +165,7 @@ const SalesCard = ({ sale, isSeller = true }) => {
     await state.contract.methods
       .acceptSaleAsBuyer(sellersAddress, presaleAddress)
       .send({ from: state.accounts[0], value: priceInWei });
+    refetchSales();
   };
 
   // Call API in future.
@@ -172,6 +177,7 @@ const SalesCard = ({ sale, isSeller = true }) => {
     await state.contract.methods
       .completeSale(sellerAddress, presaleAddress, walletToAdd)
       .send({ from: state.accounts[0] });
+    refetchSales();
   };
 
   const cancelSale = async (sellerAddress, presaleAddress, walletToAdd) => {
@@ -182,6 +188,8 @@ const SalesCard = ({ sale, isSeller = true }) => {
     await state.contract.methods
       .cancelSale(presaleAddress, walletToAdd, sellerAddress)
       .send({ from: state.accounts[0] });
+
+    refetchSales();
   };
 
   console.log(
@@ -198,37 +206,11 @@ const SalesCard = ({ sale, isSeller = true }) => {
         <br />
         Platform: {sale.presalePlatform}
         <br />
-        Price: {sale.price * 10 ** -18} BNB
+        Price: {(sale.price * 10 ** -18).toFixed(3)} BNB
         <br />
-        {!isSeller ? (
-          !sale.cancelled && sale.buyerAcceptedSaleAndSentBnbToContract ? (
-            sale.moneySentToSellerByContract ? (
-              <li className="table__body-item action tick">Success !</li>
-            ) : (
-              <li className="table__body-item action ">
-                <button
-                  className="btn btn--primary"
-                  onClick={() => {
-                    cancelSale(sale.sellerAddress, sale.presaleAddress);
-                  }}
-                >
-                  Cancel
-                </button>
-              </li>
-            )
-          ) : (
-            <li className="table__body-item action ">
-              <button
-                className="btn btn--primary"
-                onClick={() => {
-                  acceptSale(sale.sellerAddress, sale.presaleAddress);
-                }}
-              >
-                Accept Sale
-              </button>
-            </li>
-          )
-        ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
+      </p>
+      {!isSeller && !sale.cancelled ? (
+        !sale.cancelled && sale.buyerAcceptedSaleAndSentBnbToContract ? (
           sale.moneySentToSellerByContract ? (
             <li className="table__body-item action tick">Success !</li>
           ) : (
@@ -236,23 +218,7 @@ const SalesCard = ({ sale, isSeller = true }) => {
               <button
                 className="btn btn--primary"
                 onClick={() => {
-                  completeSale(
-                    sale.sellerAddress,
-                    sale.presaleAddress,
-                    sale.buyerAddress
-                  );
-                }}
-              >
-                Complete Sale
-              </button>
-              <button
-                className="btn btn--primary"
-                onClick={() => {
-                  cancelSale(
-                    sale.sellerAddress,
-                    sale.presaleAddress,
-                    sale.buyerAddress
-                  );
+                  cancelSale(sale.sellerAddress, sale.presaleAddress);
                 }}
               >
                 Cancel
@@ -260,7 +226,32 @@ const SalesCard = ({ sale, isSeller = true }) => {
             </li>
           )
         ) : (
-          <li className="table__body-item action ">
+          <button
+            className="btn btn--primary"
+            onClick={() => {
+              acceptSale(sale.sellerAddress, sale.presaleAddress);
+            }}
+          >
+            Accept Sale
+          </button>
+        )
+      ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
+        sale.moneySentToSellerByContract ? (
+          <span className="tick">Success</span>
+        ) : (
+          <>
+            <button
+              className="btn btn--primary"
+              onClick={() => {
+                completeSale(
+                  sale.sellerAddress,
+                  sale.presaleAddress,
+                  sale.buyerAddress
+                );
+              }}
+            >
+              Complete Sale
+            </button>
             <button
               className="btn btn--primary"
               onClick={() => {
@@ -273,223 +264,27 @@ const SalesCard = ({ sale, isSeller = true }) => {
             >
               Cancel
             </button>
-          </li>
-        )}
-        {sale.cancelled && <span className="cross">Cancelled</span>}
-      </p>
+          </>
+        )
+      ) : !sale.cancelled ? (
+        <button
+          className="btn btn--primary"
+          onClick={() => {
+            cancelSale(
+              sale.sellerAddress,
+              sale.presaleAddress,
+              sale.buyerAddress
+            );
+          }}
+        >
+          Cancel!
+        </button>
+      ) : (
+        <span className="cross">Cancelled</span>
+      )}
     </div>
   );
 };
-
-// export const ViewSalesFromBuyer = ({ buyersAddress }) => {
-//   const { state } = useEth();
-
-//   const [sales, setSales] = useState(null);
-
-//   const fetchAndSetSales = async () => {
-//     console.log(`Fetching sales for buyer ${buyersAddress}...`);
-//     const saleData = await state.contract.methods
-//       .getSalesForBuyer(buyersAddress)
-//       .call();
-//     console.log(`Got sales for ${buyersAddress}:`, saleData);
-//     setSales(saleData);
-//   };
-
-//   useEffect(() => {
-//     setSales(null);
-//   }, [state]);
-
-//   useEffect(() => {
-//     let table = document.getElementById("dim");
-//     console.log(
-//       `Running javascript to set event handlers on table:`,
-//       table,
-//       `sales value:`,
-//       sales
-//     );
-
-//     document.querySelectorAll(".table__row-details").forEach(function (row) {
-//       row.addEventListener("click", function () {
-//         document
-//           .querySelectorAll(".row-action--expanded")
-//           .forEach(function (el) {
-//             if (el === row.parentElement) return; // skip the current element (the one we just clicked on
-//             el.classList.toggle("row-action--expanded");
-//             el.classList.toggle("action-hidden");
-//           });
-
-//         if (!row.parentElement.classList.contains("row-action--expanded")) {
-//           // make table li font color dim
-//           document
-//             .querySelectorAll(".table__row-details")
-//             .forEach(function (el) {
-//               el.style.color = "rgba(255, 255, 255, 0.3)";
-//             });
-//         } else {
-//           document
-//             .querySelectorAll(".table__row-details")
-//             .forEach(function (el) {
-//               el.style.color = "rgba(255, 255, 255, 0.8)";
-//             });
-//         }
-//         row.parentElement.classList.toggle("row-action--expanded");
-//         row.parentElement.classList.toggle("action-hidden");
-//       });
-
-//       console.log(`Event listener on row:`, row);
-//     });
-//   }, [sales]);
-
-//   return (
-//     <div>
-//       <h1>Sales:</h1>
-//       <div className="table" id="dim">
-//         <ul className="table__header">
-//           <li className="table__header-item optional">Address</li>
-//           <li className="table__header-item optional">Platform</li>
-//           <li className="table__header-item">Price</li>
-//           <li className="table__header-item">Status</li>
-//           <li className="table__header-item optional">Action</li>
-//         </ul>
-
-//         {state.accounts?.length ? (
-//           <>
-//             <div className="table__body">
-//               {sales ? (
-//                 sales.map((sale, index) => (
-//                   <ul className="table__row action-hidden" key={index}>
-//                     <div className="table__row-details" key={sale}>
-//                       <li className="table__body-item table-address optional">
-//                         {sale.buyerAddress}
-//                       </li>
-//                       <li className="table__body-item optional">
-//                         {sale.presalePlatform}
-//                       </li>
-//                       <li className="table__body-item">
-//                         {sale.price * 10 ** -18} BNB
-//                       </li>
-//                       {!sale.cancelled &&
-//                       sale.buyerAcceptedSaleAndSentBnbToContract ? (
-//                         sale.moneySentToSellerByContract ? (
-//                           <li className="table__body-item action tick">
-//                             Success
-//                           </li>
-//                         ) : (
-//                           <li className="table__body-item action ">
-//                             Waiting For Seller
-//                           </li>
-//                         )
-//                       ) : (
-//                         <li className="table__body-item action ">
-//                           Waiting For Buyer
-//                         </li>
-//                       )}
-
-//                       <li className="show-row-action">
-//                         <i className="burger"> </i>
-//                       </li>
-//                     </div>
-//                     <div className="card table__row-action">
-//                       <h3 className="card__header">Pending Sale</h3>
-//                       <p className="card__text">
-//                         Wallet address: 0x0341235421230405305053231
-//                         <br />
-//                         Platform: Ethereum
-//                         <br />
-//                         Price: 2 ETH
-//                         <br />
-//                         Status: Inactive
-//                         <br />
-//                       </p>
-//                       <button className="btn btn--primary">Complete</button>
-//                     </div>
-//                   </ul>
-//                 ))
-//               ) : (
-//                 <p>No sales yet.</p>
-//               )}
-//               <button onClick={fetchAndSetSales}>Get Sales</button>
-//             </div>
-//           </>
-//         ) : (
-//           <h3>You are not connected.</h3>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export const AcceptSale = () => {
-//   const { state } = useEth();
-
-//   const [sellersAddress, setSellersAddress] = useState("");
-//   const [presaleAddress, setPresaleAddress] = useState("");
-//   const [price, setPrice] = useState(0);
-
-//   const isInvalidAddress = (address) => {
-//     const invalid = !state.web3.utils.isAddress(address);
-//     console.log(`Invalid address: ${invalid}`);
-//     return invalid;
-//   };
-
-//   const acceptSale = async () => {
-//     console.log(
-//       `Accepting sale for ${sellersAddress} and presale ${presaleAddress}...`
-//     );
-//     console.log(`Accounts: ${state.accounts}`);
-//     const priceInWei = state.web3.utils.toWei(price.toString(), "ether");
-//     await state.contract.methods
-//       .acceptSaleAsBuyer(sellersAddress, presaleAddress)
-//       .send({ from: state.accounts[0], value: priceInWei });
-//   };
-//   return (
-//     <div>
-//       <h1>Sales:</h1>
-//       {state.accounts?.length ? (
-//         <>
-//           <form
-//             onSubmit={(e) => {
-//               e.preventDefault();
-//             }}
-//           >
-//             <input
-//               required
-//               type="text"
-//               placeholder="Seller's Address"
-//               value={sellersAddress}
-//               onChange={(e) => setSellersAddress(e.target.value)}
-//             />
-//             <input
-//               required
-//               type="text"
-//               placeholder="Presale Address"
-//               value={presaleAddress}
-//               onChange={(e) => setPresaleAddress(e.target.value)}
-//             />
-//             <input
-//               required
-//               type="number"
-//               placeholder="Price"
-//               value={price}
-//               onChange={(e) => setPrice(e.target.value)}
-//             />
-//             <button
-//               disabled={
-//                 isInvalidAddress(sellersAddress) ||
-//                 isInvalidAddress(presaleAddress)
-//               }
-//               onClick={acceptSale}
-//             >
-//               Accept Sale
-//             </button>
-//           </form>
-//         </>
-//       ) : (
-//         <h3>You are not connected.</h3>
-//       )}
-//     </div>
-//   );
-// };
 
 export const CreateSale = () => {
   const { state } = useEth();
@@ -655,80 +450,3 @@ export const CompleteSale = () => {
     </div>
   );
 };
-
-// // function cancelSale(
-// //   address presale,
-// //   address walletToAdd,
-// //   address sellersAddress
-
-// export const CancelSale = () => {
-//   const { state } = useEth();
-
-//   const [sellerAddress, setSellerAddress] = useState("");
-//   const [presaleAddress, setPresaleAddress] = useState("");
-//   const [walletToAdd, setWalletToAdd] = useState("");
-
-//   const isInvalidAddress = (address) => {
-//     const invalid = !state.web3.utils.isAddress(address);
-//     console.log(`Invalid address: ${invalid}`);
-//     return invalid;
-//   };
-
-//   const cancelSale = async () => {
-//     console.log(
-//       `Cancellling sale for seller ${sellerAddress}, presale ${presaleAddress} and wallet ${walletToAdd}...`
-//     );
-//     console.log(`Accounts: ${state.accounts}`);
-//     await state.contract.methods
-//       .cancelSale(presaleAddress, walletToAdd, sellerAddress)
-//       .send({ from: state.accounts[0] });
-//   };
-//   return (
-//     <div>
-//       <h1>Sales:</h1>
-//       {state.accounts?.length ? (
-//         <>
-//           <form
-//             onSubmit={(e) => {
-//               e.preventDefault();
-//             }}
-//           >
-//             <input
-//               required
-//               type="text"
-//               placeholder="Wallet to Add (buyer)"
-//               value={walletToAdd}
-//               onChange={(e) => setWalletToAdd(e.target.value)}
-//             />
-//             <input
-//               required
-//               type="text"
-//               placeholder="Presale Address"
-//               value={presaleAddress}
-//               onChange={(e) => setPresaleAddress(e.target.value)}
-//             />
-//             <input
-//               required
-//               type="text"
-//               placeholder="Seller"
-//               value={sellerAddress}
-//               onChange={(e) => setSellerAddress(e.target.value)}
-//             />
-//             <button
-//               disabled={
-//                 isInvalidAddress(walletToAdd) ||
-//                 isInvalidAddress(presaleAddress) ||
-//                 isInvalidAddress(sellerAddress)
-//               }
-//               onClick={cancelSale}
-//             >
-//               Cancel Sale
-//             </button>
-//           </form>
-//         </>
-//       ) : (
-//         <h3>You are not connected.</h3>
-//       )}
-//     </div>
-//   );
-// };

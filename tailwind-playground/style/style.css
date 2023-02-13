@@ -23,11 +23,13 @@
 html {
   font-size: 62.5%;
   font-family: Inconsolata, Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
 }
 
 body {
   font-size: 2.4rem;
   min-height: 100vh;
+  padding-top: 80px;
 }
 
 @media screen and (min-width: 1024px) {
@@ -196,9 +198,10 @@ body {
 #navbar-new__content {
   display: flex;
   flex-direction: column;
-  background-color: #1510162e;
+  background-color: #1c151d;
   border-bottom: 2px solid #fe4bc6;
   position: fixed;
+  top: 52px;
   left: 0;
   height: 100vh;
   z-index: 0;
@@ -223,27 +226,26 @@ body {
   padding: 0.5rem 2rem;
 }
 .navbar-new__item:hover {
-background-color: #00000045;
+  background-color: #00000045;
 }
 
 .navbar-new__expanded#navbar-new__content {
-
-  width: 45vw;
-  min-width: 180px
+  width: max(45vw, 180px);
   opacity: 1;
   z-index: 1;
 }
 
-
-
 .navbar-new__filler-nav {
   display: flex;
-  background-color: #1510162e;
+  background-color: #1c151d;
   border-bottom: 2px solid #fe4bc6;
   width: 100vw;
   justify-content: space-between;
   align-items: center;
-  padding: 0.3rem 1rem;
+  top: 0;
+  position: fixed;
+  padding: 0.5rem;
+  z-index: 999;
 }
 
 .navbar-new__filler-nav .btn {
@@ -273,7 +275,6 @@ background-color: #00000045;
   display: none;
   margin-left: auto;
   margin-right: 2rem;
-
 }
 
 .buttons-big-screen-nav .btn {
@@ -285,23 +286,16 @@ background-color: #00000045;
 .nav-filler__buttons {
   display: flex;
   margin: 0.3rem 0;
-
 }
 .nav-filler__buttons .btn--secondary {
+  margin-right: 1.2rem;
+}
+.nav-filler__buttons {
+  font-size: 1.8rem;
   margin-right: 2rem;
 }
 
 @media screen and (max-width: 380px) {
- .nav-filler__buttons {
-    font-size: 1.8rem;
-    margin: 0;
-    padding: 0.3rem 0;
- }
-
- .navbar-new__filler-nav {
-  padding: 0.2rem;
-  
- }
 }
 
 @media screen and (min-width: 950px) {
@@ -310,8 +304,9 @@ background-color: #00000045;
     margin: 0 !important;
   }
   .buttons-big-screen-nav {
-    display: flex
+    display: flex;
   }
+
   #navbar-new__content {
     flex-direction: row;
     width: 100vw !important;
@@ -319,6 +314,8 @@ background-color: #00000045;
     justify-content: space-between;
     transition: none;
     align-items: center;
+    top: 0;
+    padding-right: 2rem;
   }
 
   .navbar-new__filler-nav {
@@ -341,8 +338,6 @@ background-color: #00000045;
     align-items: center;
   }
 
- 
-
   .navbar-new__item {
     border: none;
     padding: 1rem;
@@ -357,6 +352,13 @@ background-color: #00000045;
   .navbar-new__items li {
     margin: 0 1.5rem;
   }
+}
+
+.logo::after {
+  content: url(../images/logo.svg);
+}
+.logo {
+  margin-left: 10px;
 }
 
 /* Grid */

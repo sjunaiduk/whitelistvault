@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ConnectWallet } from "./ConnectWallet";
 
-export const NavBar = ({ switchTheSeller }) => {
+export const NavBar = ({ switchTheSeller, isUserSeller }) => {
   const [burgerExpanded, setBurgerExpanded] = useState(false);
   const [navbarExpanded, setNavbarExpanded] = useState(false);
   return (
@@ -16,7 +17,9 @@ export const NavBar = ({ switchTheSeller }) => {
           }}
         ></i>
         <div className="nav-filler__buttons">
-          <button className="btn btn--secondary">Switch View</button>
+          <button className="btn btn--secondary" onClick={switchTheSeller}>
+            Switch View
+          </button>
           <ConnectWallet />
         </div>
       </div>
@@ -33,19 +36,22 @@ export const NavBar = ({ switchTheSeller }) => {
 
         <ul className="navbar-new__items">
           <li className="navbar-new__item">
-            <a href="#" className="navbar__link">
+            <Link to="/" className="navbar__link">
               Home
-            </a>
+            </Link>
           </li>
+          {isUserSeller ? (
+            <li className="navbar-new__item">
+              <Link to="/createSale" className="navbar__link">
+                Create Sale
+              </Link>
+            </li>
+          ) : null}
+
           <li className="navbar-new__item">
-            <a href="#" className="navbar__link">
-              About
-            </a>
-          </li>
-          <li className="navbar-new__item">
-            <a href="#" className="navbar__link">
-              Contact
-            </a>
+            <Link to="/sales" className="navbar__link">
+              Sales
+            </Link>
           </li>
           <li className="navbar-new__item mobile-hidden">
             <ConnectWallet />

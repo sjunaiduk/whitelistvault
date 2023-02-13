@@ -569,7 +569,7 @@ body {
 .tick::after {
   content: url("../images/tick.svg");
   position: relative;
-  left: 3px;
+  left: 9px;
   top: 1px;
 }
 
