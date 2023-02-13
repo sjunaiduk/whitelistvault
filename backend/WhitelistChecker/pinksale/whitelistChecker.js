@@ -1,12 +1,12 @@
 const Web3 = require("web3");
 // create web3 instance using BSC mainnet
-
-const web3 = new Web3(
-  new Web3.providers.HttpProvider("https://bsc-dataseed.binance.org/")
-);
+const express = require("express");
+const router = express.Router();
+const web3 = new Web3("http://127.0.0.1:9545/");
 
 // get the contract ABI
-const abi = require("./abi.json");
+const pinksaleAbi = require("./abi.json");
+const escrowContractAbi = require("./escrowAbi.json");
 
 // const user = `0x999999dB8a4aB0BC9Ad1d0dBcA5c77a8D28cc258`;
 
@@ -61,22 +61,102 @@ const hasItBeenMoreThanNMinutesSinceSaleStarted = async (n) => {
 };
 
 const isUserWhitelisted = async (user, contractAddress) => {
-  const contract = new web3.eth.Contract(abi, contractAddress);
+  const contract = new web3.eth.Contract(pinksaleAbi, contractAddress);
   return await contract.methods.isUserWhitelisted(user).call();
 };
-async function main() {
-  const result = await hasSaleCompleted();
-  console.log(result);
-  const result2 = await hasSaleStarted();
-  console.log(result2);
-  const result3 = await hasItBeenMoreThanNMinutesSinceSaleStarted(5);
-  console.log(result3);
 
-  const result4 = await isUserWhitelisted(
-    "0xE64b19C7438a5F21bcaD5348E60E5A8D92754BDE",
-    contractAddress
-  );
-  console.log(`is user whitelisted: ${result4}`);
-}
+const ownerPvtKey = `58d7e3ec5139822b22daac4fa8de0a53d44562d47c6bde251fc2e013efc6dfab`;
 
-main();
+// add owner account to web3
+web3.eth.accounts.wallet.add(ownerPvtKey);
+
+const deployedContractAddress = `0x8e8348e512de279866de6620b8c75b2440c1be11`;
+router.post("/completeTest", async (req, res) => {
+  const deployedAddress = req.body?.deployedAddress;
+  const signature = req.body?.signature;
+  const seller = req.body?.seller;
+  const presale = req.body?.presale;
+  const walletToAdd = req.body?.walletToAdd;
+
+  // extract address from signature
+  try {
+    var signingAddress = await web3.eth.accounts.recover(
+      "I'm the real owner",
+      signature
+    );
+  } catch (e) {
+    return res.status(400).json({
+      seller: seller,
+      signature: signature,
+      message: "Error extracting address from signature",
+      error: e.message,
+    });
+  }
+
+  // validate address checksum
+  try {
+    const isValidAddress =
+      web3.utils.toChecksumAddress(presale) &&
+      web3.utils.toChecksumAddress(seller) &&
+      web3.utils.toChecksumAddress(walletToAdd);
+
+    if (!isValidAddress) {
+      return res
+
+        .json({
+          "extracted address": signingAddress,
+          seller: seller,
+          signature: signature,
+          message: "Invalid address checksum",
+        })
+        .status(400);
+    }
+  } catch (e) {
+    return res.status(400).json({
+      "extracted address": signingAddress,
+      seller: seller,
+      signature: signature,
+      message: "Error checking address checksum",
+    });
+  }
+
+  if (seller != signingAddress) {
+    return res.status(400).json({
+      "extracted address": signingAddress,
+      seller: seller,
+      signature: signature,
+      message: "Seller and extracted address do NOT match",
+    });
+  }
+
+  // complete sale. no pinksale checks since this is a test
+
+  try {
+    const contract = new web3.eth.Contract(escrowContractAbi, deployedAddress);
+
+    const estimatedGas = await contract.methods
+      .completeSale(seller, presale, walletToAdd)
+      .estimateGas({ from: web3.eth.accounts.wallet[0].address });
+    const tx = await contract.methods
+      .completeSale(seller, presale, walletToAdd)
+      .send({ from: web3.eth.accounts.wallet[0].address, gas: estimatedGas });
+
+    return res.status(200).json({
+      "extracted address": signingAddress,
+      seller: seller,
+      signature: signature,
+      message: "Sale completed",
+      tx: tx,
+    });
+  } catch (e) {
+    return res.status(400).json({
+      "extracted address": signingAddress,
+      seller: seller,
+      signature: signature,
+      message: "Error completing sale",
+      error: e.message,
+    });
+  }
+});
+
+module.exports = router;

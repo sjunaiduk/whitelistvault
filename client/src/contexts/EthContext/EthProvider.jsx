@@ -15,16 +15,11 @@ function EthProvider({ children }) {
       );
 
       const signature = await web3.eth.personal.sign(
-        web3.utils.fromUtf8("I'm the real owner"),
+        "I'm the real owner",
         accounts[0]
       );
 
       console.log(`signature: ${signature}`);
-      const signingAddress = await web3.eth.personal.ecRecover(
-        web3.utils.fromUtf8("I'm the real owner"),
-        signature
-      );
-      console.log(`signingAddress: ${signingAddress}`);
 
       const networkID = await web3.eth.net.getId();
       const { abi } = artifact;
