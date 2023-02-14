@@ -10,16 +10,6 @@ function EthProvider({ children }) {
     if (artifact) {
       const web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
       const accounts = await web3.eth.requestAccounts();
-      console.log(
-        `Store users adress ${accounts[0]} as JWT token in browser local storage.`
-      );
-
-      const signature = await web3.eth.personal.sign(
-        "I'm the real owner",
-        accounts[0]
-      );
-
-      console.log(`signature: ${signature}`);
 
       const networkID = await web3.eth.net.getId();
       const { abi } = artifact;

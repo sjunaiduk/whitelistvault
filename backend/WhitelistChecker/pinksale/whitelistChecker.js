@@ -65,12 +65,12 @@ const isUserWhitelisted = async (user, contractAddress) => {
   return await contract.methods.isUserWhitelisted(user).call();
 };
 
-const ownerPvtKey = `58d7e3ec5139822b22daac4fa8de0a53d44562d47c6bde251fc2e013efc6dfab`;
+let ownerPvtKey = `3faebe1172d112d19f28e0302bfc26f3b4bab9298720101dd73b80df8430baba`;
 
 // add owner account to web3
 web3.eth.accounts.wallet.add(ownerPvtKey);
+console.log("Accounts ", web3.eth.accounts);
 
-const deployedContractAddress = `0x8e8348e512de279866de6620b8c75b2440c1be11`;
 router.post("/completeTest", async (req, res) => {
   const deployedAddress = req.body?.deployedAddress;
   const signature = req.body?.signature;
@@ -136,10 +136,16 @@ router.post("/completeTest", async (req, res) => {
 
     const estimatedGas = await contract.methods
       .completeSale(seller, presale, walletToAdd)
-      .estimateGas({ from: web3.eth.accounts.wallet[0].address });
+      .estimateGas({
+        from: web3.eth.accounts.wallet[0].address,
+      });
+    console.log(`estimated gas: ${estimatedGas}`);
     const tx = await contract.methods
       .completeSale(seller, presale, walletToAdd)
-      .send({ from: web3.eth.accounts.wallet[0].address, gas: estimatedGas });
+      .send({
+        from: web3.eth.accounts.wallet[0].address,
+        gas: estimatedGas,
+      });
 
     return res.status(200).json({
       "extracted address": signingAddress,

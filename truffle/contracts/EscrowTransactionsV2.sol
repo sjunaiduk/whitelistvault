@@ -49,7 +49,7 @@ contract EscrowTransactionsV2 {
     mapping(address => SaleInfo[]) sales;
     mapping(address => SellerStats) public sellerStats;
     mapping(address => BuyerStats) public buyerStats;
-    address owner = 0xc319D186f4D66863F60BDD4dACcF74142c477b28;
+    address owner = 0xd08F6D0571125C6f7Ec137473c1Cb80aee4306EA;
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -334,6 +334,7 @@ contract EscrowTransactionsV2 {
                 saleInfo = sale;
             }
         }
+
         if (saleInfo.price == 0) {
             revert(
                 "No valid sale found. Must not be cancelled, wallet must not be added, buyer must have accepted sale and sent BNB to contract, and money must not have been sent to seller by contract."
@@ -359,10 +360,9 @@ contract EscrowTransactionsV2 {
             payable(seller).transfer(saleInfo.price);
             saleInfo.moneySentToSellerByContract = true;
         }
-
         sales[seller][saleIndex] = saleInfo;
         sellerStats[seller].totalSalesSuccessful++;
-        sellerStats[msg.sender].totalSalesPending--;
+        sellerStats[seller].totalSalesPending--;
     }
 
     // assume that for the same presale, a buyer can have a cancelled sale with the same wallet address,

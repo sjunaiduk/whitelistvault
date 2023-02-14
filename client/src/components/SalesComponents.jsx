@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
 import { useEth } from "../contexts/EthContext";
+import { completeSaleRequest, completeCancelRequest } from "../apiInteractor";
 
 /*
 struct SaleInfo {
@@ -173,28 +174,82 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
     console.log(
       `Completing sale for seller ${sellerAddress}, presale ${presaleAddress} and wallet ${walletToAdd}...`
     );
-    console.log(`Accounts: ${state.accounts}`);
-    await state.contract.methods
-      .completeSale(sellerAddress, presaleAddress, walletToAdd)
-      .send({ from: state.accounts[0] });
-    refetchSales();
-  };
 
-  const cancelSale = async (sellerAddress, presaleAddress, walletToAdd) => {
-    console.log(
-      `Cancellling sale for seller ${sellerAddress}, presale ${presaleAddress} and wallet ${walletToAdd}...`
+    const signature = await state.web3.eth.personal.sign(
+      "I'm the real owner",
+      state.accounts[0]
     );
-    console.log(`Accounts: ${state.accounts}`);
-    await state.contract.methods
-      .cancelSale(presaleAddress, walletToAdd, sellerAddress)
-      .send({ from: state.accounts[0] });
+
+    console.log(`signature: ${signature}`);
+    try {
+      const result = await completeSaleRequest(
+        signature,
+        state.contract._address,
+        sellerAddress,
+        presaleAddress,
+        walletToAdd
+      );
+      console.log("Result of compelte sale call from API: ", result);
+    } catch (e) {
+      console.log(e);
+    }
 
     refetchSales();
   };
 
-  console.log(
-    `Rednering card for sale: ${sale}... and isSeller: ${isSeller}...`
-  );
+  const cancelSale = async (
+    sellerAddress,
+    presaleAddress,
+    walletToAdd,
+    timeSaleWasAccepted
+  ) => {
+    console.log(
+      `Cancellling sale for seller ${sellerAddress}, presale ${presaleAddress} and wallet ${walletToAdd}..., timeSaleWasAccepted: ${timeSaleWasAccepted}`
+    );
+
+    // check if timeSaleWasAccepted is less than 5 minutes ago
+    const timeNow = new Date().getTime();
+    const timeDiff = timeNow - timeSaleWasAccepted;
+    const timeDiffInMinutes = timeDiff / 1000 / 60;
+    console.log(`Time diff in minutes: ${timeDiffInMinutes}`);
+
+    // only applies to buyers as they cant cancel within 5 mintues of accepting
+    if (!isSeller) {
+      if (timeDiffInMinutes > 5) {
+        console.log(
+          `You can't cancel a sale after 5 minutes! (Doing api call to check if sale started and wallet hasn't been added yet - HARDOCDED TO CANCEL FOR TESTS))`
+        );
+        const signature = await state.web3.eth.personal.sign(
+          "I'm the real owner",
+          state.accounts[0]
+        );
+        try {
+          await completeCancelRequest(
+            signature,
+            state.contract._address,
+            sellerAddress,
+            presaleAddress,
+            walletToAdd
+          );
+        } catch (e) {
+          console.log(e);
+        }
+      } else {
+        console.log("Time diff is less than 5 minutes, cancelling sale...");
+        await state.contract.methods
+          .cancelSale(presaleAddress, walletToAdd, sellerAddress)
+          .send({ from: state.accounts[0] });
+      }
+    } else {
+      await state.contract.methods
+        .cancelSale(presaleAddress, walletToAdd, sellerAddress)
+        .send({ from: state.accounts[0] });
+    }
+
+    refetchSales();
+  };
+
+  console.log("Sale: ", sale);
 
   return (
     <div className="card table__row-action">
@@ -209,7 +264,70 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
         Price: {(sale.price * 10 ** -18).toFixed(3)} BNB
         <br />
       </p>
-      {!isSeller && !sale.cancelled ? (
+      {sale.cancelled ? (
+        <span className="cross">Cancelled!!!!</span>
+      ) : isSeller ? (
+        sale.buyerAcceptedSaleAndSentBnbToContract ? (
+          sale.moneySentToSellerByContract ? (
+            <span className="tick">Success!</span>
+          ) : (
+            <button
+              className="btn btn--primary"
+              onClick={() => {
+                completeSale(
+                  sale.sellerAddress,
+                  sale.presaleAddress,
+                  sale.buyerAddress
+                );
+              }}
+            >
+              Complete Sale
+            </button>
+          )
+        ) : (
+          <button
+            className="btn btn--primary"
+            onClick={() => {
+              cancelSale(
+                sale.sellerAddress,
+                sale.presaleAddress,
+                sale.buyerAddress,
+                sale.buyerAcceptedTimestamp
+              );
+            }}
+          >
+            Cancel
+          </button>
+        )
+      ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
+        sale.moneySentToSellerByContract ? (
+          <span className="tick">Success!</span>
+        ) : (
+          <button
+            className="btn btn--primary"
+            onClick={() => {
+              cancelSale(
+                sale.sellerAddress,
+                sale.presaleAddress,
+                sale.buyerAddress,
+                sale.buyerAcceptedTimestamp
+              );
+            }}
+          >
+            Cancel
+          </button>
+        )
+      ) : (
+        <button
+          className="btn btn--primary"
+          onClick={() => {
+            acceptSale(sale.sellerAddress, sale.presaleAddress);
+          }}
+        >
+          Accept Sale
+        </button>
+      )}
+      {/* {!isSeller && !sale.cancelled ? (
         !sale.cancelled && sale.buyerAcceptedSaleAndSentBnbToContract ? (
           sale.moneySentToSellerByContract ? (
             <li className="table__body-item action tick">Success !</li>
@@ -218,7 +336,12 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
               <button
                 className="btn btn--primary"
                 onClick={() => {
-                  cancelSale(sale.sellerAddress, sale.presaleAddress);
+                  cancelSale(
+                    sale.sellerAddress,
+                    sale.presaleAddress,
+                    sale.buyerAddress,
+                    sale.buyerAcceptedTimestamp
+                  );
                 }}
               >
                 Cancel
@@ -281,7 +404,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
         </button>
       ) : (
         <span className="cross">Cancelled</span>
-      )}
+      )} */}
     </div>
   );
 };
@@ -320,7 +443,7 @@ export const CreateSale = () => {
             }}
           >
             <div class="form-group__control">
-              <label class="form-group__label tick" for="walletToAdd">
+              <label class="form-group__label tick" htmlFor="walletToAdd">
                 Wallet To Add
               </label>
               <input
@@ -334,7 +457,7 @@ export const CreateSale = () => {
               />
             </div>
             <div class="form-group__control">
-              <label class="form-group__label tick" for="presale">
+              <label class="form-group__label tick" htmlFor="presale">
                 Presale Wallet
               </label>
               <input
@@ -347,7 +470,7 @@ export const CreateSale = () => {
               />
             </div>
             <div class="form-group__control">
-              <label class="form-group__label tick" for="price">
+              <label class="form-group__label tick" htmlFor="price">
                 Price
               </label>
               <input
