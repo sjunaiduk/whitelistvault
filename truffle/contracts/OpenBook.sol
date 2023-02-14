@@ -49,6 +49,10 @@ contract OpenBook {
     mapping(address => SaleInfo[]) sales;
     mapping(address => SellerStats) public sellerStats;
     mapping(address => BuyerStats) public buyerStats;
+    uint256 totalOpenBookSales = 0;
+    address[] sellersWithOpenBookSales;
+    mapping(address => uint256) totalPendingSalesForSeller;
+
     address owner = 0xd08F6D0571125C6f7Ec137473c1Cb80aee4306EA;
 
     modifier onlyOwner() {
@@ -105,6 +109,20 @@ contract OpenBook {
                 moneySentToSellerByContract: false,
                 price: price
             });
+
+            totalOpenBookSales++;
+            totalPendingSalesForSeller[msg.sender]++;
+            // check if seller already has an open book sale
+            bool sellerHasOpenBookSale = false;
+            for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
+                if (sellersWithOpenBookSales[i] == msg.sender) {
+                    sellerHasOpenBookSale = true;
+                }
+            }
+
+            if (sellerHasOpenBookSale == false) {
+                sellersWithOpenBookSales.push(msg.sender);
+            }
         } else {
             saleInfo = SaleInfo({
                 buyerAcceptedTimestamp: 0,
@@ -161,6 +179,8 @@ contract OpenBook {
                 );
             }
 
+            // we are not doing this for an open book sale!!!!! Remember to increment the buyer stats for an open book sale
+            // the same for the seller stat for that would be buyer!!!!
             buyerStats[walletToAdd].totalSalesBuyerWasPartOf++;
             sellerStats[msg.sender]
                 .totalSalesToABuyerForAPresale[presale]
@@ -172,6 +192,30 @@ contract OpenBook {
         sellerStats[msg.sender].totalSales++;
         sellerStats[msg.sender].totalSalesForAPresale[presale]++;
         sellerStats[msg.sender].totalSalesPending++;
+    }
+
+    function getPendingOpenBookSales() public view returns (SaleInfo[] memory) {
+        SaleInfo[] memory pendingSales = new SaleInfo[](totalOpenBookSales);
+        uint256 index = 0;
+
+        for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
+            address seller = sellersWithOpenBookSales[i];
+            for (uint256 j = 0; j < sellerStats[seller].totalSales; j++) {
+                SaleInfo memory sale = sales[seller][j];
+                if (
+                    sale.cancelled == false &&
+                    sale.walletAdded == false &&
+                    sale.buyerAcceptedSaleAndSentBnbToContract == false &&
+                    sale.buyerAddress == address(0) &&
+                    sale.price != 0
+                ) {
+                    pendingSales[index] = sale;
+                    index++;
+                }
+            }
+        }
+
+        return pendingSales;
     }
 
     function acceptSaleAsBuyer(address seller, address presale) public payable {
@@ -189,6 +233,8 @@ contract OpenBook {
             ) {
                 saleIndex = i;
                 saleInfo = sale;
+                // save gas and break, if we dont then we will have to loop through all the sales
+                break;
                 // this is the sale we want to accept, can be open booking or specific wallet
             }
         }
@@ -209,6 +255,22 @@ contract OpenBook {
             sellerStats[seller]
                 .totalSalesToABuyerForAPresale[presale]
                 .salesToABuyerForAPresale[msg.sender]++;
+
+            totalOpenBookSales--;
+            totalPendingSalesForSeller[seller]--;
+            // remove seller from sellersWithOpenBookSales if he has no more open book sales
+            if (totalPendingSalesForSeller[seller] == 0) {
+                for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
+                    if (sellersWithOpenBookSales[i] == seller) {
+                        uint256 lastIndex = sellersWithOpenBookSales.length - 1;
+                        sellersWithOpenBookSales[i] = sellersWithOpenBookSales[
+                            lastIndex
+                        ];
+
+                        sellersWithOpenBookSales.pop();
+                    }
+                }
+            }
         }
         saleInfo.buyerAcceptedSaleAndSentBnbToContract = true;
         saleInfo.buyerAcceptedTimestamp = block.timestamp;

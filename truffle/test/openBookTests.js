@@ -35,6 +35,182 @@ const url = `http://localhost:3000/pinksale/completeTest`;
 const urlForBuyerToCancel = `http://localhost:3000/pinksale/cancelAsBuyer`;
 
 contract("OpenBook", (accounts) => {
+  it("should create 3 open book transactions and let a buyer accept one, so there will be only 2 open book transactions for that seller", async () => {
+    const escrowTransactionsInstance = await EscrowTransactionsV2.new();
+    const presaleAddress = "0x0000000000000000000000000000000000000123";
+    const seller = accounts[0];
+    const buyer = accounts[1];
+    const noAddress = "0x0000000000000000000000000000000000000000";
+    const price = "1000000000000000000";
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      noAddress,
+      price,
+      { from: seller }
+    );
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      noAddress,
+      price,
+      { from: seller }
+    );
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      noAddress,
+      price,
+      { from: seller }
+    );
+
+    // let buyer accept one
+
+    const buyerAcceptResult =
+      await escrowTransactionsInstance.acceptSaleAsBuyer(
+        seller,
+        presaleAddress,
+        {
+          from: buyer,
+          value: price,
+        }
+      );
+
+    let openBookSales =
+      await escrowTransactionsInstance.getPendingOpenBookSales();
+
+    console.log(openBookSales);
+    /*struct SaleInfo {
+        bool buyerAcceptedSaleAndSentBnbToContract;
+        bool cancelled;
+        bool walletAdded;
+        string presalePlatform;
+        bool moneySentToSellerByContract;
+        uint256 price;
+    } */
+    const sale = openBookSales[0];
+    assert.equal(openBookSales.length, 2, "There should be 2 open book sales");
+    assert.equal(sale.price, price, "Sale price is not correct");
+    assert.equal(
+      sale.presalePlatform,
+      "Pink",
+      "Presale platform is not correct"
+    );
+    assert.equal(
+      sale.buyerAcceptedSaleAndSentBnbToContract,
+      false,
+      "Buyer has not accepted sale and sent BNB to contract"
+    );
+    assert.equal(sale.cancelled, false, "Sale hasn't been cancelled");
+    assert.equal(sale.walletAdded, false, "Wallet has not been added");
+    assert.equal(
+      sale.moneySentToSellerByContract,
+      false,
+      "Money has not been sent to seller by contract"
+    );
+  });
+  it("should create 3 open book transactions", async () => {
+    const escrowTransactionsInstance = await EscrowTransactionsV2.new();
+    const presaleAddress = "0x0000000000000000000000000000000000000123";
+    const seller = accounts[0];
+    const noAddress = "0x0000000000000000000000000000000000000000";
+    const price = "1000000000000000000";
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      noAddress,
+      price,
+      { from: seller }
+    );
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      noAddress,
+      price,
+      { from: seller }
+    );
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      noAddress,
+      price,
+      { from: seller }
+    );
+
+    let openBookSales =
+      await escrowTransactionsInstance.getPendingOpenBookSales();
+
+    /*struct SaleInfo {
+        bool buyerAcceptedSaleAndSentBnbToContract;
+        bool cancelled;
+        bool walletAdded;
+        string presalePlatform;
+        bool moneySentToSellerByContract;
+        uint256 price;
+    } */
+    const sale = openBookSales[0];
+    assert.equal(openBookSales.length, 3, "There should be 3 open book sales");
+    assert.equal(sale.price, price, "Sale price is not correct");
+    assert.equal(
+      sale.presalePlatform,
+      "Pink",
+      "Presale platform is not correct"
+    );
+    assert.equal(
+      sale.buyerAcceptedSaleAndSentBnbToContract,
+      false,
+      "Buyer has not accepted sale and sent BNB to contract"
+    );
+    assert.equal(sale.cancelled, false, "Sale hasn't been cancelled");
+    assert.equal(sale.walletAdded, false, "Wallet has not been added");
+    assert.equal(
+      sale.moneySentToSellerByContract,
+      false,
+      "Money has not been sent to seller by contract"
+    );
+  });
+  it("should create a new open book transaction correctly.", async () => {
+    const escrowTransactionsInstance = await EscrowTransactionsV2.new();
+    const presaleAddress = "0x0000000000000000000000000000000000000123";
+    const seller = accounts[0];
+    const noAddress = "0x0000000000000000000000000000000000000000";
+    const price = "1000000000000000000";
+
+    await escrowTransactionsInstance.createSale(
+      presaleAddress,
+      noAddress,
+      price,
+      { from: seller }
+    );
+
+    let openBookSales =
+      await escrowTransactionsInstance.getPendingOpenBookSales();
+
+    /*struct SaleInfo {
+        bool buyerAcceptedSaleAndSentBnbToContract;
+        bool cancelled;
+        bool walletAdded;
+        string presalePlatform;
+        bool moneySentToSellerByContract;
+        uint256 price;
+    } */
+    const sale = openBookSales[0];
+    assert.equal(openBookSales.length, 1, "There should be 1 open book sale");
+    assert.equal(sale.price, price, "Sale price is not correct");
+    assert.equal(
+      sale.presalePlatform,
+      "Pink",
+      "Presale platform is not correct"
+    );
+    assert.equal(
+      sale.buyerAcceptedSaleAndSentBnbToContract,
+      false,
+      "Buyer has not accepted sale and sent BNB to contract"
+    );
+    assert.equal(sale.cancelled, false, "Sale hasn't been cancelled");
+    assert.equal(sale.walletAdded, false, "Wallet has not been added");
+    assert.equal(
+      sale.moneySentToSellerByContract,
+      false,
+      "Money has not been sent to seller by contract"
+    );
+  });
   it("should create a new escrow transactions with correct values", async () => {
     const escrowTransactionsInstance = await EscrowTransactionsV2.new();
     const presaleAddress = "0x0000000000000000000000000000000000000123";
