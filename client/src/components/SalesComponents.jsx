@@ -39,9 +39,26 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
           .call();
         break;
     }
+
     console.log(`Got sales for ${usersAddress}:`, saleData);
     setSales(saleData);
   };
+
+  function updateSpecificSaleByIndex(index, outcome) {
+    setSales((prevSales) => {
+      return prevSales.map((sale, i) => {
+        if (i === index) {
+          if (outcome === "cancelled") {
+            return { ...sale, cancelled: true };
+          } else {
+            return { ...sale, moneySentToSellerByContract: true };
+          }
+        } else {
+          return sale;
+        }
+      });
+    });
+  }
 
   //const [refs, setRefs] = useState([]);
 
@@ -131,6 +148,12 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
                       refetchSales={fetchAndSetSales}
                       sale={sale}
                       isSeller={isSeller}
+                      setRowSuccess={() => {
+                        updateSpecificSaleByIndex(index, "success");
+                      }}
+                      setRowCancelled={() => {
+                        updateSpecificSaleByIndex(index, "cancelled");
+                      }}
                     />
                   </ul>
                 ))
@@ -156,7 +179,13 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
+const SalesCard = ({
+  sale,
+  isSeller = true,
+  refetchSales,
+  setRowSuccess,
+  setRowCancelled,
+}) => {
   const { state } = useEth();
   const acceptSale = async (sellersAddress, presaleAddress) => {
     console.log(
@@ -199,6 +228,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
       console.log("Result of compelte sale call from API: ", result);
 
       setCompleteSaleOutcome("completed");
+      setRowSuccess();
     } catch (e) {
       console.log(e);
     }
@@ -239,6 +269,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
             walletToAdd
           );
           setCancelSaleOutcome("cancelled");
+          setRowCancelled();
         } catch (e) {
           console.log(e);
         }
