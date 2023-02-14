@@ -16,7 +16,9 @@ export const completeSaleRequest = async (
     walletToAdd: walletToAdd,
   };
   try {
+    console.log("Data being sent to API Complete call: ", data);
     const response = await axios.post(url, data);
+    console.log(`API Complete call response:`, response);
     return response;
   } catch (e) {
     console.log(`API Complete call error,`, e);

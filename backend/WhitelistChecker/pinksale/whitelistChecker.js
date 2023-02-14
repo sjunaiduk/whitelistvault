@@ -71,6 +71,10 @@ let ownerPvtKey = `3faebe1172d112d19f28e0302bfc26f3b4bab9298720101dd73b80df8430b
 web3.eth.accounts.wallet.add(ownerPvtKey);
 console.log("Accounts ", web3.eth.accounts);
 
+const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
 router.post("/completeTest", async (req, res) => {
   const deployedAddress = req.body?.deployedAddress;
   const signature = req.body?.signature;

@@ -154,6 +154,8 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
   );
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   const { state } = useEth();
   const acceptSale = async (sellersAddress, presaleAddress) => {
@@ -168,6 +170,11 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
       .send({ from: state.accounts[0], value: priceInWei });
     refetchSales();
   };
+
+  // when we cancel/complete with API changes aren't reflected in UI until refresh after a while, so we
+  // will use state to keep track of the outcome of the API call and display it to the user.
+  const [cancelSaleOutcome, setCancelSaleOutcome] = useState(null);
+  const [completeSaleOutcome, setCompleteSaleOutcome] = useState(null);
 
   // Call API in future.
   const completeSale = async (sellerAddress, presaleAddress, walletToAdd) => {
@@ -190,11 +197,11 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
         walletToAdd
       );
       console.log("Result of compelte sale call from API: ", result);
+
+      setCompleteSaleOutcome("completed");
     } catch (e) {
       console.log(e);
     }
-
-    refetchSales();
   };
 
   const cancelSale = async (
@@ -215,7 +222,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
 
     // only applies to buyers as they cant cancel within 5 mintues of accepting
     if (!isSeller) {
-      if (timeDiffInMinutes > 5) {
+      if (timeDiffInMinutes > 5 || true) {
         console.log(
           `You can't cancel a sale after 5 minutes! (Doing api call to check if sale started and wallet hasn't been added yet - HARDOCDED TO CANCEL FOR TESTS))`
         );
@@ -231,6 +238,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
             presaleAddress,
             walletToAdd
           );
+          setCancelSaleOutcome("cancelled");
         } catch (e) {
           console.log(e);
         }
@@ -245,11 +253,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
         .cancelSale(presaleAddress, walletToAdd, sellerAddress)
         .send({ from: state.accounts[0] });
     }
-
-    refetchSales();
   };
-
-  console.log("Sale: ", sale);
 
   return (
     <div className="card table__row-action">
@@ -264,11 +268,12 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
         Price: {(sale.price * 10 ** -18).toFixed(3)} BNB
         <br />
       </p>
-      {sale.cancelled ? (
+      {sale.cancelled || cancelSaleOutcome == "cancelled" ? (
         <span className="cross">Cancelled!!!!</span>
       ) : isSeller ? (
         sale.buyerAcceptedSaleAndSentBnbToContract ? (
-          sale.moneySentToSellerByContract ? (
+          sale.moneySentToSellerByContract ||
+          completeSaleOutcome == "completed" ? (
             <span className="tick">Success!</span>
           ) : (
             <button
@@ -300,7 +305,8 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
           </button>
         )
       ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
-        sale.moneySentToSellerByContract ? (
+        sale.moneySentToSellerByContract ||
+        completeSaleOutcome == "completed" ? (
           <span className="tick">Success!</span>
         ) : (
           <button
@@ -327,84 +333,6 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
           Accept Sale
         </button>
       )}
-      {/* {!isSeller && !sale.cancelled ? (
-        !sale.cancelled && sale.buyerAcceptedSaleAndSentBnbToContract ? (
-          sale.moneySentToSellerByContract ? (
-            <li className="table__body-item action tick">Success !</li>
-          ) : (
-            <li className="table__body-item action ">
-              <button
-                className="btn btn--primary"
-                onClick={() => {
-                  cancelSale(
-                    sale.sellerAddress,
-                    sale.presaleAddress,
-                    sale.buyerAddress,
-                    sale.buyerAcceptedTimestamp
-                  );
-                }}
-              >
-                Cancel
-              </button>
-            </li>
-          )
-        ) : (
-          <button
-            className="btn btn--primary"
-            onClick={() => {
-              acceptSale(sale.sellerAddress, sale.presaleAddress);
-            }}
-          >
-            Accept Sale
-          </button>
-        )
-      ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
-        sale.moneySentToSellerByContract ? (
-          <span className="tick">Success</span>
-        ) : (
-          <>
-            <button
-              className="btn btn--primary"
-              onClick={() => {
-                completeSale(
-                  sale.sellerAddress,
-                  sale.presaleAddress,
-                  sale.buyerAddress
-                );
-              }}
-            >
-              Complete Sale
-            </button>
-            <button
-              className="btn btn--primary"
-              onClick={() => {
-                cancelSale(
-                  sale.sellerAddress,
-                  sale.presaleAddress,
-                  sale.buyerAddress
-                );
-              }}
-            >
-              Cancel
-            </button>
-          </>
-        )
-      ) : !sale.cancelled ? (
-        <button
-          className="btn btn--primary"
-          onClick={() => {
-            cancelSale(
-              sale.sellerAddress,
-              sale.presaleAddress,
-              sale.buyerAddress
-            );
-          }}
-        >
-          Cancel!
-        </button>
-      ) : (
-        <span className="cross">Cancelled</span>
-      )} */}
     </div>
   );
 };
