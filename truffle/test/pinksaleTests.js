@@ -1,5 +1,5 @@
 const PinkSaleTests = artifacts.require("PinkSaleTests");
-let presale = `0xaca28b101152b3B33ED68849bE6e515e3cDfF8b5`;
+let presale = `0x8c9c938226E1f1F45bb395C288C980eea45D0dB1`;
 contract("PinkSaleTests", (accounts) => {
   // it("should get all whitelisted users", async () => {
   //   const pinkSaleTestContractInstance = await PinkSaleTests.deployed({
@@ -7,21 +7,14 @@ contract("PinkSaleTests", (accounts) => {
   //     overwrite: false,
   //   });
 
-  //   let walletAdded = "0xABA74a68376e9Ac1030E50545C426757F4207b66";
-  //   let walletNotAdded = accounts[4];
-
-  //   let numberOfWhitelistedUsers =
-  //     await pinkSaleTestContractInstance.numberOfWhitelistedUsers(presale);
-  //   console.log(`numberOfWhitelistedUsers: ${numberOfWhitelistedUsers}`);
-
   //   let allWhitelistedUsers =
-  //     await pinkSaleTestContractInstance.getWhitelistedUsers(
-  //       presale,
-  //       0,
-  //       numberOfWhitelistedUsers
-  //     );
+  //     await pinkSaleTestContractInstance.getAllWhitelistedUsers(presale);
 
-  //   console.log(`allWhitelistedUsers: ${allWhitelistedUsers}`);
+  //   console.log(`Number of whitelisted users: ${allWhitelistedUsers.length}`);
+  //   console.log(
+  //     `allWhitelistedUsers: ${JSON.parse(JSON.stringify(allWhitelistedUsers))}`
+  //   );
+  // });
 
   //   // assert.equal(isAdded, true, "User is not added to whitelist");
   //   // assert.equal(isNotAdded, false, "User is added to whitelist");
@@ -49,6 +42,16 @@ contract("PinkSaleTests", (accounts) => {
     });
 
     let pool = await pinkSaleTestContractInstance.getPoolSettings(presale);
+    console.log(pool);
+    assert.equal(pool !== null, true, "pool is null");
+  });
+  it("should return pool states", async () => {
+    const pinkSaleTestContractInstance = await PinkSaleTests.deployed({
+      from: accounts[0],
+      overwrite: false,
+    });
+
+    let pool = await pinkSaleTestContractInstance.getPoolStates(presale);
     console.log(pool);
     assert.equal(pool !== null, true, "pool is null");
   });

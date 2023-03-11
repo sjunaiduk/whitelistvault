@@ -49,6 +49,46 @@ pragma solidity >=0.4.22 <0.9.0;
     "type": "function"
   }, */
 
+/**
+    {
+    "inputs": [],
+    "name": "poolStates",
+    "outputs": [
+      {
+        "internalType": "enum PoolStorageLibrary.State",
+        "name": "state",
+        "type": "uint8"
+      },
+      { "internalType": "uint256", "name": "finishTime", "type": "uint256" },
+      { "internalType": "uint256", "name": "totalRaised", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "totalVolumePurchased",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "publicSaleStartTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "liquidityUnlockTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalVestedTokens",
+        "type": "uint256"
+      },
+      { "internalType": "int256", "name": "lockId", "type": "int256" },
+      { "internalType": "string", "name": "poolDetails", "type": "string" },
+      { "internalType": "string", "name": "kycDetails", "type": "string" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }, */
+
 struct PoolSettings {
     address token;
     address currency;
@@ -65,10 +105,6 @@ struct PoolSettings {
 }
 
 interface PinksaleContract {
-    function isUserWhitelisted(address user) external view returns (bool);
-
-    function startTime() external view returns (uint256);
-
     function getNumberOfWhitelistedUsers() external view returns (uint256);
 
     function poolSettings() external view returns (PoolSettings memory);
@@ -80,14 +116,6 @@ interface PinksaleContract {
 }
 
 contract PinksaleTests {
-    function isUserWhitelisted(
-        address user,
-        address presale
-    ) public view returns (bool) {
-        PinksaleContract presaleInstance = PinksaleContract(presale);
-        return presaleInstance.isUserWhitelisted(user);
-    }
-
     function getPoolSettings(
         address presale
     ) public view returns (PoolSettings memory) {
@@ -112,5 +140,16 @@ contract PinksaleTests {
         }
 
         return false;
+    }
+
+    function getAllWhitelistedUsers(
+        address presale
+    ) public view returns (address[] memory) {
+        PinksaleContract presaleInstance = PinksaleContract(presale);
+        return
+            presaleInstance.getWhitelistedUsers(
+                0,
+                presaleInstance.getNumberOfWhitelistedUsers()
+            );
     }
 }
