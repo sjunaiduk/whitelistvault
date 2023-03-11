@@ -1,0 +1,34 @@
+BSC
+// check if the address is whitelisted
+
+// contract.methods
+//   .isUserWhitelisted(user)
+//   .call()
+//   .then((result) => {
+//     console.log(result);
+//   });
+
+// contract.methods
+//   .getWhitelistedUsers(0, 99)
+//   .call()
+//   .then((result) => {
+//     console.log(result);
+//   });
+
+//store11 is start time
+// Stor12 is when it finishes
+// stor16 is softcap
+// stor17 is hardcap
+// stor22 is cancelled/completed
+// store24 is how much is raised
+//https://bscscan.com/bytecode-decompiler?a=0xfb9e73f0fbea4a4d9f6ae4670183662f96ecd97e
+// get the contract address
+
+
+ARB
+
+// stor13 is when it finishes
+// stor 25 is how much is raised 
+// store 18 is the hardcap 
+
+// i think everything was incremented by 1 ?

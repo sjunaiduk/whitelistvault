@@ -4,59 +4,48 @@ const express = require("express");
 const router = express.Router();
 const web3 = new Web3("http://127.0.0.1:9545/");
 
+const web3Bsc = new Web3(
+  new Web3.providers.HttpProvider("https://bsc-dataseed.binance.org/")
+);
+
+const web3Arbitrum = new Web3(
+  new Web3.providers.HttpProvider("https://arb1.arbitrum.io/rpc")
+);
+
+const web3Eth = new Web3(
+  new Web3.providers.HttpProvider(
+    "https://api.zmok.io/mainnet/oaen6dy8ff6hju9k"
+  )
+);
+
 // get the contract ABI
 const pinksaleAbi = require("./abi.json");
 const escrowContractAbi = require("./escrowAbi.json");
 
-// const user = `0x999999dB8a4aB0BC9Ad1d0dBcA5c77a8D28cc258`;
-
-// // create the contract instance
-// const contract = new web3.eth.Contract(abi, contractAddress);
-
-// check if the address is whitelisted
-
-// contract.methods
-//   .isUserWhitelisted(user)
-//   .call()
-//   .then((result) => {
-//     console.log(result);
-//   });
-
-// contract.methods
-//   .getWhitelistedUsers(0, 99)
-//   .call()
-//   .then((result) => {
-//     console.log(result);
-//   });
-
-//store11 is start time
-// Stor12 is when it finishes
-// stor16 is softcap
-// stor17 is hardcap
-// stor22 is cancelled/completed
-// store24 is how much is raised
-//https://bscscan.com/bytecode-decompiler?a=0xfb9e73f0fbea4a4d9f6ae4670183662f96ecd97e
-// get the contract address
 const contractAddress = "0x8e8348e512de279866de6620b8c75b2440c1be11";
 
-const hasSaleCompleted = async () => {
-  const result = await web3.eth.getStorageAt(contractAddress, 22);
+const hasSaleCompleted = async (ca) => {
+  const result = await web3.eth.getStorageAt(ca, 22);
   return result == 1;
 };
 
-const hasSaleStarted = async () => {
-  const startTime = parseInt(
-    await web3.eth.getStorageAt(contractAddress, 11),
-    16
-  );
+const hasSaleStarted = async (ca) => {
+  const startTime = parseInt(await web3.eth.getStorageAt(ca, 11), 16);
   return startTime < Date.now();
 };
 
-const hasItBeenMoreThanNMinutesSinceSaleStarted = async (n) => {
-  const startTime = parseInt(
-    await web3.eth.getStorageAt(contractAddress, 11),
-    16
-  );
+const hasItBeenMoreThanNMinutesSinceSaleStarted = async (n, ca, network) => {
+  let myWeb3;
+  if (network == "bsc") {
+    myWeb3 = web3Bsc;
+  } else if (network == "arbitrum") {
+    myWeb3 = web3Arbitrum;
+  } else {
+    myWeb3 = web3;
+  }
+  // for arb stor 12 is start time, everything incremented by 1.... check for ETH, polygon etc as well.
+  const startTime = parseInt(await myWeb3.eth.getStorageAt(ca, 11), 16);
+  console.log("startTime formatted into date", new Date(startTime * 1000));
   return Date.now() > n * 60 * 1000 + startTime;
 };
 
@@ -143,7 +132,7 @@ router.post("/completeTest", async (req, res) => {
       .estimateGas({
         from: web3.eth.accounts.wallet[0].address,
       });
-    console.log(`estimated gas: ${estimatedGas}`);
+    console.log(`estimated gas for complete sale: ${estimatedGas}`);
     const tx = await contract.methods
       .completeSale(seller, presale, walletToAdd)
       .send({
@@ -258,3 +247,9 @@ router.post("/cancelAsBuyer", async (req, res) => {
 });
 
 module.exports = router;
+
+hasItBeenMoreThanNMinutesSinceSaleStarted(
+  1,
+  "0x0AAf62d60154C72522CD0f5e4eAE3626c51DE2aE",
+  "arbitrum"
+);

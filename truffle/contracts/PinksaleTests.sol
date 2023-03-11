@@ -52,15 +52,15 @@ pragma solidity >=0.4.22 <0.9.0;
 struct PoolSettings {
     address token;
     address currency;
+    uint256 rate;
     uint256 startTime;
     uint256 endTime;
-    uint256 rate;
+    uint256 presaleRate;
     uint256 softCap;
     uint256 hardCap;
-    uint256 liquidityListingRate;
-    uint256 liquidityLockDays;
-    uint256 liquidityPercent;
-    uint128 ethFeePercent;
+    uint256 listingRate;
+    uint256 liqLockDays;
+    uint128 liquidityPercent;
     uint128 tokenFeePercent;
 }
 
@@ -72,33 +72,45 @@ interface PinksaleContract {
     function getNumberOfWhitelistedUsers() external view returns (uint256);
 
     function poolSettings() external view returns (PoolSettings memory);
+
+    function getWhitelistedUsers(
+        uint256 startIndex,
+        uint256 endIndex
+    ) external view returns (address[] memory);
 }
 
 contract PinksaleTests {
-    function isUserWhitelisted(address user, address presale)
-        public
-        view
-        returns (bool)
-    {
+    function isUserWhitelisted(
+        address user,
+        address presale
+    ) public view returns (bool) {
         PinksaleContract presaleInstance = PinksaleContract(presale);
         return presaleInstance.isUserWhitelisted(user);
     }
 
-    function numberOfWhitelistedUsers(address presale)
-        public
-        view
-        returns (uint256)
-    {
-        PinksaleContract presaleInstance = PinksaleContract(presale);
-        return presaleInstance.getNumberOfWhitelistedUsers();
-    }
-
-    function getPoolSettings(address presale)
-        public
-        view
-        returns (PoolSettings memory)
-    {
+    function getPoolSettings(
+        address presale
+    ) public view returns (PoolSettings memory) {
         PinksaleContract presaleInstance = PinksaleContract(presale);
         return presaleInstance.poolSettings();
+    }
+
+    function isUserWhitelistedCustom(
+        address presale,
+        address user
+    ) internal view returns (bool) {
+        PinksaleContract presaleInstance = PinksaleContract(presale);
+        address[] memory users = presaleInstance.getWhitelistedUsers(
+            0,
+            presaleInstance.getNumberOfWhitelistedUsers()
+        );
+
+        for (uint256 i = 0; i < users.length; i++) {
+            if (users[i] == user) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

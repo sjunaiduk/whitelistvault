@@ -252,7 +252,7 @@ const SalesCard = ({
 
     // only applies to buyers as they cant cancel within 5 mintues of accepting
     if (!isSeller) {
-      if (timeDiffInMinutes > 5 || true) {
+      if (timeDiffInMinutes > 5) {
         console.log(
           `You can't cancel a sale after 5 minutes! (Doing api call to check if sale started and wallet hasn't been added yet - HARDOCDED TO CANCEL FOR TESTS))`
         );
