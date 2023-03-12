@@ -32,7 +32,7 @@ struct PoolSettings {
     uint128 tokenFeePercent;
 }
 
-interface PinksaleContract {
+interface IPinksaleContract {
     function getNumberOfWhitelistedUsers() external view returns (uint256);
 
     function poolSettings() external view returns (PoolSettings memory);
@@ -72,7 +72,7 @@ struct BuyerStats {
     // return array
 }
 
-contract OpenBook {
+contract OpenBookV2 {
     mapping(address => SaleInfo[]) sales;
     mapping(address => SellerStats) public sellerStats;
     mapping(address => BuyerStats) public buyerStats;
@@ -80,7 +80,11 @@ contract OpenBook {
     address[] sellersWithOpenBookSales;
     mapping(address => uint256) totalPendingSalesForSeller;
 
-    address owner = 0xd08F6D0571125C6f7Ec137473c1Cb80aee4306EA;
+    address owner;
+
+    constructor() {
+        owner = msg.sender;
+    }
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -90,7 +94,7 @@ contract OpenBook {
     function getPoolSettings(
         address presale
     ) internal view returns (PoolSettings memory) {
-        PinksaleContract presaleInstance = PinksaleContract(presale);
+        IPinksaleContract presaleInstance = IPinksaleContract(presale);
         return presaleInstance.poolSettings();
     }
 
@@ -98,7 +102,7 @@ contract OpenBook {
         address presale,
         address user
     ) internal view returns (bool) {
-        PinksaleContract presaleInstance = PinksaleContract(presale);
+        IPinksaleContract presaleInstance = IPinksaleContract(presale);
         address[] memory users = presaleInstance.getWhitelistedUsers(
             0,
             presaleInstance.getNumberOfWhitelistedUsers()
@@ -278,7 +282,11 @@ contract OpenBook {
         return pendingSales;
     }
 
-    function acceptSaleAsBuyer(address seller, address presale) public payable {
+    function acceptSaleAsBuyer(
+        address seller,
+        address presale,
+        uint256 price
+    ) public payable {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
 
@@ -289,7 +297,8 @@ contract OpenBook {
                 sale.presaleAddress == presale &&
                 sale.cancelled == false &&
                 sale.walletAdded == false &&
-                sale.buyerAcceptedSaleAndSentBnbToContract == false
+                sale.buyerAcceptedSaleAndSentBnbToContract == false &&
+                sale.price == price
             ) {
                 saleIndex = i;
                 saleInfo = sale;
@@ -430,7 +439,9 @@ contract OpenBook {
         address seller,
         address presale,
         address walletToAdd
-    ) public {
+    ) public // seller , presale, walletToAdd used to identify the sale
+
+    {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
 
@@ -530,5 +541,9 @@ contract OpenBook {
 
     function withdraw() public {
         payable(msg.sender).transfer(address(this).balance);
+    }
+
+    function setOwner(address _owner) public onlyOwner {
+        owner = _owner;
     }
 }
