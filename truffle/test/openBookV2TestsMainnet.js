@@ -4,10 +4,11 @@ const EscrowTransactionsV2 = artifacts.require("OpenBookV2");
 
 contract("OpenBook", (accounts) => {
   const presaleAddress = "0xa49E4960aEDBfd467f48531B392148fDee08E582";
+  const presaleTwoAddress = "0x486C9d333B288C6Be32BbdffF771D580b13E37bA";
   let escrowTransactionsInstance;
   beforeEach(async () => {
     escrowTransactionsInstance = await EscrowTransactionsV2.at(
-      "0x4F11826189cbC8057F3649fd568969939F827fd7"
+      "0xc1f716d4a69D76B9EDE412b717B27c4a93321f0c"
     );
   });
   it("should create 3 open book transactions and let a buyer accept one, so there will be only 2 open book transactions for that seller", async () => {
@@ -40,33 +41,19 @@ contract("OpenBook", (accounts) => {
 
     // let buyer accept one
 
-    const buyerAcceptResult =
-      await escrowTransactionsInstance.acceptSaleAsBuyer(
-        seller,
-        presaleAddress,
-        price,
-        {
-          from: buyer,
-          value: price,
-        }
-      );
-
-    console.log(
-      `Gas used for buyer accept sale: ${buyerAcceptResult.receipt.gasUsed}`
+    await escrowTransactionsInstance.acceptSaleAsBuyer(
+      seller,
+      presaleAddress,
+      price,
+      {
+        from: buyer,
+        value: price,
+      }
     );
 
     let openBookSales =
       await escrowTransactionsInstance.getPendingOpenBookSales();
 
-    console.log(openBookSales);
-    /*struct SaleInfo {
-        bool buyerAcceptedSaleAndSentBnbToContract;
-        bool cancelled;
-        bool walletAdded;
-        string presalePlatform;
-        bool moneySentToSellerByContract;
-        uint256 price;
-    } */
     const sale = openBookSales[0];
     assert.equal(openBookSales.length, 2, "There should be 2 open book sales");
     assert.equal(sale.price, price, "Sale price is not correct");
@@ -94,7 +81,7 @@ contract("OpenBook", (accounts) => {
   it("should return the sales for a seller", async () => {
     const seller = accounts[0];
     const buyersWalletToAdd = accounts[2];
-    const price = "1000000000000000000"; // 1bnb
+    const price = web3.utils.toWei("0.01", "ether");
 
     await escrowTransactionsInstance.createSale(
       presaleAddress,
@@ -112,7 +99,7 @@ contract("OpenBook", (accounts) => {
   it("should let a seller cancel a sale and make the sale again, then return the sales.", async () => {
     const seller = accounts[0];
     const buyersWalletToAdd = accounts[3];
-    const price = "10000000000000"; // 1bnb
+    const price = web3.utils.toWei("0.01", "ether");
 
     await escrowTransactionsInstance.createSale(
       presaleAddress,
@@ -312,11 +299,20 @@ contract("OpenBook", (accounts) => {
       price,
       { from: seller }
     );
-    const buyersBalanceAfterSale = Number(
-      web3.utils.fromWei(await web3.eth.getBalance(buyersWalletToAdd), "ether")
-    );
+
     const sellersBalanceBeforeSale = Number(
       web3.utils.fromWei(await web3.eth.getBalance(seller), "ether")
+    );
+
+    const contractBalanceBeforeSaleCompleted = Number(
+      web3.utils.fromWei(
+        await web3.eth.getBalance(escrowTransactionsInstance.address),
+        "ether"
+      )
+    );
+
+    console.log(
+      `Contract balance before sale. ${contractBalanceBeforeSaleCompleted}`
     );
 
     try {
@@ -334,10 +330,6 @@ contract("OpenBook", (accounts) => {
       web3.utils.fromWei(await web3.eth.getBalance(seller), "ether")
     );
 
-    let buyersBalanceAfterCancellation = Number(
-      web3.utils.fromWei(await web3.eth.getBalance(buyersWalletToAdd), "ether")
-    );
-
     let sale = await escrowTransactionsInstance.getSaleInfo(
       seller,
       presaleAddress,
@@ -346,8 +338,11 @@ contract("OpenBook", (accounts) => {
 
     sale = sale[0];
 
-    const contractBalance = await web3.eth.getBalance(
-      escrowTransactionsInstance.address
+    const contractBalanceAfterSaleCompleted = Number(
+      web3.utils.fromWei(
+        await web3.eth.getBalance(escrowTransactionsInstance.address),
+        "ether"
+      )
     );
 
     assert.equal(
@@ -357,15 +352,9 @@ contract("OpenBook", (accounts) => {
     );
 
     assert.equal(
-      Math.round(buyersBalanceAfterSale),
-      Math.round(buyersBalanceAfterCancellation),
-      "Buyer should not have been sent anything."
-    );
-
-    assert.equal(
-      contractBalance,
-      0,
-      "Contract balance still contains BNB and did not refund it to the buyer"
+      contractBalanceBeforeSaleCompleted,
+      contractBalanceAfterSaleCompleted,
+      "Contract balance sent BNB to the seller when it shouldn't have."
     );
 
     assert.equal(
@@ -390,355 +379,259 @@ contract("OpenBook", (accounts) => {
   });
   // account [1] has accepted the sale and sent BNB to the contract
   // sale exists for account [2] and [3] need them to accept...
-  // it("should let a seller make multiple sales, let the buyer accept them, and complete them", async () => {
-  //   const escrowTransactionsInstance = await EscrowTransactionsV2.new();
-  //   const presaleAddress = "0x0000000000000000000000000000000000000123";
-  //   const seller = accounts[0];
-  //   const buyersWalletToAdd2 = accounts[2];
-  //   const buyersWalletToAdd3 = accounts[3];
-  //   const buyersBalanceBeforeSale = Number(
-  //     web3.utils.fromWei(await web3.eth.getBalance(buyersWalletToAdd), "ether")
-  //   );
-  //   const sellersBalanceBeforeSale = Number(
-  //     web3.utils.fromWei(await web3.eth.getBalance(seller), "ether")
-  //   );
-  //   const price = web3.utils.toWei("0.001", "ether");
+  it("should let a seller make multiple sales, let the buyer accept them, and complete them", async () => {
+    const seller = accounts[0];
+    const buyersWalletToAddOne = accounts[2];
+    const buyersWalletToAddTwo = accounts[3];
+    const buyerOneBalanceBeforeSale = await web3.eth.getBalance(
+      buyersWalletToAddOne
+    );
 
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress,
-  //     buyersWalletToAdd,
-  //     price,
-  //     { from: seller }
-  //   );
+    const buyerTwoBalanceBeforeSale = await web3.eth.getBalance(
+      buyersWalletToAddTwo
+    );
+    const sellersBalanceBeforeSale = await web3.eth.getBalance(seller);
+    const price = web3.utils.toWei("0.01", "ether");
 
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress,
-  //     buyersWalletToAdd2,
-  //     price,
-  //     { from: seller }
-  //   );
+    await escrowTransactionsInstance.acceptSaleAsBuyer(
+      seller,
+      presaleAddress,
+      price,
+      {
+        from: buyersWalletToAddOne,
+        value: price,
+      }
+    );
+    await escrowTransactionsInstance.acceptSaleAsBuyer(
+      seller,
+      presaleAddress,
+      price,
+      {
+        from: buyersWalletToAddTwo,
+        value: price,
+      }
+    );
 
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress,
-  //     buyersWalletToAdd3,
-  //     price,
-  //     { from: seller }
-  //   );
+    const buyerOneBalanceAfterSaleAccepted = await web3.eth.getBalance(
+      buyersWalletToAddOne
+    );
 
-  //   await escrowTransactionsInstance.acceptSaleAsBuyer(seller, presaleAddress, {
-  //     from: buyersWalletToAdd,
-  //     value: price,
-  //   });
-  //   await escrowTransactionsInstance.acceptSaleAsBuyer(seller, presaleAddress, {
-  //     from: buyersWalletToAdd2,
-  //     value: price,
-  //   });
-  //   await escrowTransactionsInstance.acceptSaleAsBuyer(seller, presaleAddress, {
-  //     from: buyersWalletToAdd3,
-  //     value: price,
-  //   });
+    const buyerTwoBalanceAfterSaleAccepted = Number(
+      web3.utils.fromWei(
+        await web3.eth.getBalance(buyersWalletToAddTwo),
+        "ether"
+      )
+    );
 
-  //   const sellersPrivateKey = `58d7e3ec5139822b22daac4fa8de0a53d44562d47c6bde251fc2e013efc6dfab`;
-  //   const signature = await web3.eth.accounts.sign(
-  //     "I'm the real owner",
-  //     sellersPrivateKey
-  //   );
+    let contractBalanceBeforeSaleCompleted = await web3.eth.getBalance(
+      escrowTransactionsInstance.address
+    );
+    try {
+      await escrowTransactionsInstance.completeSale(
+        seller,
+        presaleAddress,
+        buyersWalletToAddOne,
+        {
+          from: seller,
+        }
+      );
 
-  //   try {
-  //     const response = await axios.post(url, {
-  //       signature: signature.signature,
-  //       seller: seller,
-  //       presale: presaleAddress,
-  //       walletToAdd: buyersWalletToAdd,
-  //       deployedAddress: escrowTransactionsInstance.address,
-  //     });
-  //   } catch (e) {}
+      await escrowTransactionsInstance.completeSale(
+        seller,
+        presaleAddress,
+        buyersWalletToAddTwo,
+        {
+          from: seller,
+        }
+      );
+    } catch (e) {
+      console.log(e);
+    }
 
-  //   try {
-  //     const response = await axios.post(url, {
-  //       signature: signature.signature,
-  //       seller: seller,
-  //       presale: presaleAddress,
-  //       walletToAdd: buyersWalletToAdd2,
-  //       deployedAddress: escrowTransactionsInstance.address,
-  //     });
-  //   } catch (e) {}
+    const sellersBalanceAfterSale = await web3.eth.getBalance(seller);
 
-  //   try {
-  //     const response = await axios.post(url, {
-  //       signature: signature.signature,
-  //       seller: seller,
-  //       presale: presaleAddress,
-  //       walletToAdd: buyersWalletToAdd3,
-  //       deployedAddress: escrowTransactionsInstance.address,
-  //     });
-  //   } catch (e) {}
+    console.log(
+      `Seller balance before sale: ${sellersBalanceBeforeSale} after sale: ${sellersBalanceAfterSale}`
+    );
 
-  //   const sellersBalanceAfterSale = Number(
-  //     web3.utils.fromWei(await web3.eth.getBalance(seller), "ether")
-  //   );
+    let sale = await escrowTransactionsInstance.getSaleInfo(
+      seller,
+      presaleAddress,
+      buyersWalletToAddOne
+    );
 
-  //   let sale = await escrowTransactionsInstance.getSaleInfo(
-  //     seller,
-  //     presaleAddress,
-  //     buyersWalletToAdd
-  //   );
+    sale = sale[0];
 
-  //   sale = sale[0];
+    let sale2 = await escrowTransactionsInstance.getSaleInfo(
+      seller,
+      presaleAddress,
+      buyersWalletToAddTwo
+    );
 
-  //   let sale2 = await escrowTransactionsInstance.getSaleInfo(
-  //     seller,
-  //     presaleAddress,
-  //     buyersWalletToAdd2
-  //   );
+    sale2 = sale2[1];
 
-  //   sale2 = sale2[0];
-  //   let sale3 = await escrowTransactionsInstance.getSaleInfo(
-  //     seller,
-  //     presaleAddress,
-  //     buyersWalletToAdd3
-  //   );
+    const contractBalanceAfterSaleCompleted = await web3.eth.getBalance(
+      escrowTransactionsInstance.address
+    );
 
-  //   sale3 = sale3[0];
+    assert.equal(
+      contractBalanceBeforeSaleCompleted > contractBalanceAfterSaleCompleted,
+      true,
+      "Contract balance didnt send the buyers BNB to the seller"
+    );
 
-  //   const contractBalance = await web3.eth.getBalance(
-  //     escrowTransactionsInstance.address
-  //   );
+    assert.equal(
+      sale.buyerAcceptedSaleAndSentBnbToContract,
+      true,
+      "Buyer 1 for some reason did not accept and send BNB to the contract"
+    );
 
-  //   assert.equal(
-  //     contractBalance,
-  //     0,
-  //     "Contract balance still contains BNB and did not send it to the sellers"
-  //   );
+    assert.equal(sale.cancelled, false, "Sale for some reason got cancelled");
 
-  //   assert.equal(
-  //     sale.buyerAcceptedSaleAndSentBnbToContract,
-  //     true,
-  //     "Buyer did accept and send BNB to the contract here the seller is cancelling"
-  //   );
+    assert.equal(sale.walletAdded, true, "Wallet should be added here.");
 
-  //   assert.equal(sale.cancelled, false, "Sale for some reason got cancelled");
+    assert.equal(
+      sale.moneySentToSellerByContract,
+      true,
+      "Money should be sent to the seller"
+    );
 
-  //   assert.equal(sale.walletAdded, true, "Wallet should be added here.");
+    assert.equal(
+      sale2.buyerAcceptedSaleAndSentBnbToContract,
+      true,
+      "Buyer 2 for some reason did not accept and send BNB to the contract"
+    );
 
-  //   assert.equal(
-  //     sale.moneySentToSellerByContract,
-  //     true,
-  //     "Money should be sent to the seller"
-  //   );
+    assert.equal(sale2.cancelled, false, "Sale for some reason got cancelled");
 
-  //   assert.equal(
-  //     sale2.buyerAcceptedSaleAndSentBnbToContract,
-  //     true,
-  //     "Buyer did accept and send BNB to the contract here the seller is cancelling"
-  //   );
+    assert.equal(sale2.walletAdded, true, "Wallet should be added here.");
 
-  //   assert.equal(sale2.cancelled, false, "Sale for some reason got cancelled");
+    assert.equal(
+      sale2.moneySentToSellerByContract,
+      true,
+      "Money should be sent to the seller"
+    );
 
-  //   assert.equal(sale2.walletAdded, true, "Wallet should be added here.");
+    assert.equal(
+      sellersBalanceAfterSale > sellersBalanceBeforeSale,
+      true,
+      "Seller did not receive the BNB from the contract"
+    );
 
-  //   assert.equal(
-  //     sale2.moneySentToSellerByContract,
-  //     true,
-  //     "Money should be sent to the seller"
-  //   );
+    assert.equal(
+      buyerOneBalanceAfterSaleAccepted < buyerOneBalanceBeforeSale,
+      true,
+      "Buyer 1 did not send the BNB to the contract"
+    );
 
-  //   assert.equal(
-  //     sale3.buyerAcceptedSaleAndSentBnbToContract,
-  //     true,
-  //     "Buyer did accept and send BNB to the contract here the seller is cancelling"
-  //   );
+    assert.equal(
+      buyerTwoBalanceAfterSaleAccepted < buyerTwoBalanceBeforeSale,
+      true,
+      "Buyer 2 did not send the BNB to the contract"
+    );
+  });
 
-  //   assert.equal(sale3.cancelled, false, "Sale for some reason got cancelled");
+  // Account[1] has accepted sale for presale 1, and sent BNB to the contract
+  // we will make another sale directed at him.
+  // 1 accepted sale, 1 pending sale
 
-  //   assert.equal(sale3.walletAdded, true, "Wallet should be added here.");
+  // Account[2] has 1 completed sale.
+  it("should let a buyer be part of multiple sales, and return the sales that buyer is part of with the correct state of each sale.", async () => {
+    const seller = accounts[0];
+    const buyersWalletToAddOne = accounts[1];
+    const buyersWalletToAddTwo = accounts[2];
 
-  //   assert.equal(
-  //     sale3.moneySentToSellerByContract,
-  //     true,
-  //     "Money should be sent to the seller"
-  //   );
+    const price = "1000000";
 
-  //   assert.equal(
-  //     Math.round(sellersBalanceBeforeSale + 3),
-  //     Math.round(sellersBalanceAfterSale),
-  //     "Seller was sent money when they shouldn't have been as the sale was cancelled."
-  //   );
-  // });
+    await escrowTransactionsInstance.createSale(
+      presaleTwoAddress,
+      buyersWalletToAddOne,
+      price,
+      { from: seller }
+    );
 
-  // it("should let a buyer be part of multiple sales, and return the sales that buyer is part of", async () => {
-  //   const escrowTransactionsInstance = await EscrowTransactionsV2.new();
-  //   const presaleAddress = "0x0000000000000000000000000000000000000123";
-  //   const seller = accounts[0];
-  //   const seller2 = accounts[4];
-  //   const buyersWalletToAdd = accounts[1];
-  //   const presaleAddress2 = accounts[2];
-  //   const presaleAddress3 = accounts[3];
+    const salesForBuyerOne = await escrowTransactionsInstance.getSalesForBuyer(
+      buyersWalletToAddOne
+    );
 
-  //   const price = web3.utils.toWei("1", "ether");
+    const salesForBuyerTwo = await escrowTransactionsInstance.getSalesForBuyer(
+      buyersWalletToAddTwo
+    );
 
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress,
-  //     buyersWalletToAdd,
-  //     price,
-  //     { from: seller }
-  //   );
+    const pendingSalesForBuyerOne = salesForBuyerOne.filter((sale) => {
+      return (
+        sale.buyerAcceptedSaleAndSentBnbToContract === false &&
+        sale.moneySentToSellerByContract === false
+      );
+    });
 
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress2,
-  //     buyersWalletToAdd,
-  //     price,
-  //     { from: seller }
-  //   );
+    const acceptedSalesForBuyerOne = salesForBuyerOne.filter((sale) => {
+      return (
+        sale.buyerAcceptedSaleAndSentBnbToContract === true &&
+        sale.moneySentToSellerByContract === false
+      );
+    });
 
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress3,
-  //     buyersWalletToAdd,
-  //     price,
-  //     { from: seller }
-  //   );
+    const pendingSalesForBuyerTwo = salesForBuyerTwo.filter((sale) => {
+      return (
+        sale.buyerAcceptedSaleAndSentBnbToContract === true &&
+        sale.moneySentToSellerByContract === false
+      );
+    });
 
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress3,
-  //     buyersWalletToAdd,
-  //     price,
-  //     { from: seller2 }
-  //   );
+    const acceptedSalesForBuyerTwo = salesForBuyerTwo.filter((sale) => {
+      return (
+        sale.buyerAcceptedSaleAndSentBnbToContract === true &&
+        sale.moneySentToSellerByContract === false
+      );
+    });
 
-  //   const salesForBuyer = await escrowTransactionsInstance.getSalesForBuyer(
-  //     buyersWalletToAdd
-  //   );
+    const completedSalesForBuyerTwo = salesForBuyerTwo.filter((sale) => {
+      return sale.moneySentToSellerByContract === true;
+    });
 
-  //   //console.log(salesForBuyer);
+    assert.equal(
+      salesForBuyerOne.length,
+      2,
+      "There should be 2 total sales for  buyer 1"
+    );
 
-  //   assert.equal(
-  //     salesForBuyer.length,
-  //     4,
-  //     "There should be 4 sales for this buyer"
-  //   );
-  // });
+    assert.equal(
+      pendingSalesForBuyerOne.length,
+      1,
+      "There should be 1 pending sale for  buyer 1"
+    );
 
-  // account [1] has accepted a sale.
-  // it("should let a buyer be part of multiple sales, and return the sales that buyer is part of, the number of pending, active and completed sales should be correct", async () => {
-  //   const escrowTransactionsInstance = await EscrowTransactionsV2.new();
-  //   const presaleAddress = "0x0000000000000000000000000000000000000123";
-  //   const seller = accounts[0];
-  //   const seller2 = accounts[4];
-  //   const buyersWalletToAdd = accounts[1];
-  //   const presaleAddress2 = accounts[2];
-  //   const presaleAddress3 = accounts[3];
+    assert.equal(
+      acceptedSalesForBuyerOne.length,
+      1,
+      "There should be 1 accepted sale for  buyer 1"
+    );
 
-  //   const price = web3.utils.toWei("1", "ether");
+    assert.equal(
+      salesForBuyerTwo.length,
+      1,
+      "There should be 1 total sales for  buyer 2"
+    );
 
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress,
-  //     buyersWalletToAdd,
-  //     price,
-  //     { from: seller }
-  //   );
+    assert.equal(
+      pendingSalesForBuyerTwo.length,
+      0,
+      "There should be 0 pending sale for buyer 2"
+    );
 
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress2,
-  //     buyersWalletToAdd,
-  //     price,
-  //     { from: seller }
-  //   );
+    assert.equal(
+      acceptedSalesForBuyerTwo.length,
+      0,
+      "There are currently no accepted sales for buyer 2"
+    );
 
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress3,
-  //     buyersWalletToAdd,
-  //     price,
-  //     { from: seller }
-  //   );
-
-  //   await escrowTransactionsInstance.createSale(
-  //     presaleAddress3,
-  //     buyersWalletToAdd,
-  //     price,
-  //     { from: seller2 }
-  //   );
-
-  //   await escrowTransactionsInstance.acceptSaleAsBuyer(
-  //     seller2,
-  //     presaleAddress3,
-  //     {
-  //       from: buyersWalletToAdd,
-  //       value: price,
-  //     }
-  //   );
-
-  //   await escrowTransactionsInstance.acceptSaleAsBuyer(
-  //     seller,
-  //     presaleAddress3,
-  //     {
-  //       from: buyersWalletToAdd,
-  //       value: price,
-  //     }
-  //   );
-
-  //   const sellersPrivateKey = `58d7e3ec5139822b22daac4fa8de0a53d44562d47c6bde251fc2e013efc6dfab`;
-  //   const signature = await web3.eth.accounts.sign(
-  //     "I'm the real owner",
-  //     sellersPrivateKey
-  //   );
-
-  //   try {
-  //     const response = await axios.post(url, {
-  //       signature: signature.signature,
-  //       seller: seller,
-  //       presale: presaleAddress3,
-  //       walletToAdd: buyersWalletToAdd,
-  //       deployedAddress: escrowTransactionsInstance.address,
-  //     });
-  //   } catch (e) {}
-
-  //   // 4 Total sales
-  //   // 2 has been accepted
-  //   // 1 Has been completed
-  //   // 2 are pending
-
-  //   const salesForBuyer = await escrowTransactionsInstance.getSalesForBuyer(
-  //     buyersWalletToAdd
-  //   );
-
-  //   const pendingSales = salesForBuyer.filter((sale) => {
-  //     return sale.buyerAcceptedSaleAndSentBnbToContract === false;
-  //   });
-
-  //   const acceptedSales = salesForBuyer.filter((sale) => {
-  //     return sale.buyerAcceptedSaleAndSentBnbToContract === true;
-  //   });
-
-  //   const completedSales = salesForBuyer.filter((sale) => {
-  //     return sale.moneySentToSellerByContract === true;
-  //   });
-
-  //   //console.log(salesForBuyer);
-
-  //   assert.equal(
-  //     salesForBuyer.length,
-  //     4,
-  //     "There should be 4 sales for this buyer"
-  //   );
-
-  //   assert.equal(
-  //     pendingSales.length,
-  //     2,
-  //     "There should be 2 pending sales for this buyer"
-  //   );
-
-  //   assert.equal(
-  //     acceptedSales.length,
-  //     2,
-  //     "There should be 2 accepted sales for this buyer"
-  //   );
-
-  //   assert.equal(
-  //     completedSales.length,
-  //     1,
-  //     "There should be 1 completed sales for this buyer"
-  //   );
-  // });
+    assert.equal(
+      completedSalesForBuyerTwo.length,
+      1,
+      "There should be 1 completed sale for buyer 2"
+    );
+  });
 
   // it("should not let a buyer accept and cancel within 5 minutes but allow after.", async () => {
   //   const escrowTransactionsInstance = await EscrowTransactionsV2.new();
