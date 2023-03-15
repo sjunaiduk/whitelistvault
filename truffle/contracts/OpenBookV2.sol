@@ -80,7 +80,10 @@ contract OpenBookV2 {
     address[] sellersWithOpenBookSales;
     mapping(address => uint256) totalPendingSalesForSeller;
 
-    address owner;
+    address public owner;
+    address public feeAddress = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+    uint8 public feePercentage = 5;
+    bool public feesEnabled = true;
 
     constructor() {
         owner = msg.sender;
@@ -89,6 +92,18 @@ contract OpenBookV2 {
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
         _;
+    }
+
+    function setFeeAddress(address newFeeAddress) public onlyOwner {
+        feeAddress = newFeeAddress;
+    }
+
+    function setFeePercent(uint8 newFeePercent) public onlyOwner {
+        feePercentage = newFeePercent;
+    }
+
+    function setFeesEnabled(bool newFeesEnabled) public onlyOwner {
+        feesEnabled = newFeesEnabled;
     }
 
     function getPoolSettings(
@@ -380,11 +395,12 @@ contract OpenBookV2 {
             revert("Sale does not exist");
         }
 
-        require(
+        if (
             msg.sender == saleInfo.buyerAddress ||
-                msg.sender == saleInfo.sellerAddress,
-            "You are not the buyer or seller of this sale"
-        );
+            msg.sender == saleInfo.sellerAddress
+        ) {
+            revert("You are not the buyer or seller of this sale");
+        }
         require(saleInfo.cancelled == false, "Sale has already been cancelled");
 
         // check if sale has been completed.
@@ -406,7 +422,7 @@ contract OpenBookV2 {
                 saleInfo.buyerAcceptedTimestamp;
 
             // if presale hasn't started yet
-            if (saleInfo.presaleStartTime > block.timestamp) {
+            if (saleInfo.presaleStartTime >= block.timestamp) {
                 // if it's been more than 5 minutes. revert.
                 if (timeDifference > 5 minutes) {
                     revert(
@@ -495,7 +511,13 @@ contract OpenBookV2 {
             saleInfo.walletAdded = true;
 
             if (saleInfo.buyerAcceptedSaleAndSentBnbToContract == true) {
-                payable(seller).transfer(saleInfo.price);
+                if (feesEnabled == true) {
+                    uint256 fee = (saleInfo.price * feePercentage) / 100;
+                    payable(feeAddress).transfer(fee);
+                    payable(seller).transfer(saleInfo.price - fee);
+                } else {
+                    payable(seller).transfer(saleInfo.price);
+                }
                 saleInfo.moneySentToSellerByContract = true;
             }
             sales[seller][saleIndex] = saleInfo;
@@ -544,8 +566,8 @@ contract OpenBookV2 {
 
     receive() external payable {}
 
-    function withdraw() public {
-        payable(msg.sender).transfer(address(this).balance);
+    function withdraw() public onlyOwner {
+        payable(owner).transfer(address(this).balance);
     }
 
     function setOwner(address _owner) public onlyOwner {
