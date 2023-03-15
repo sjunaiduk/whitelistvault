@@ -81,7 +81,7 @@ contract OpenBookV2 {
     mapping(address => uint256) totalPendingSalesForSeller;
 
     address public owner;
-    address public feeAddress = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+    address public feeAddress = owner;
     uint8 public feePercentage = 5;
     bool public feesEnabled = true;
 
@@ -236,7 +236,7 @@ contract OpenBookV2 {
                     break;
                 }
             }
-            if (buyersWalletAlreadyExists == false) {
+            if (buyersWalletAlreadyExists == true) {
                 revert("You already have an active sale for this wallet");
             }
 
@@ -396,8 +396,8 @@ contract OpenBookV2 {
         }
 
         if (
-            msg.sender == saleInfo.buyerAddress ||
-            msg.sender == saleInfo.sellerAddress
+            msg.sender != saleInfo.buyerAddress ||
+            msg.sender != saleInfo.sellerAddress
         ) {
             revert("You are not the buyer or seller of this sale");
         }

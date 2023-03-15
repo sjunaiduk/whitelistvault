@@ -8,7 +8,7 @@ contract("OpenBook", (accounts) => {
   let escrowTransactionsInstance;
   beforeEach(async () => {
     escrowTransactionsInstance = await EscrowTransactionsV2.at(
-      "0xc1f716d4a69D76B9EDE412b717B27c4a93321f0c"
+      "0xF592E5444468D91A61e0C5A8Ea5c895F1247f830"
     );
   });
   it("should create 3 open book transactions and let a buyer accept one, so there will be only 2 open book transactions for that seller", async () => {
