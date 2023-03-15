@@ -179,6 +179,8 @@ contract OpenBookV2 {
             for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
                 if (sellersWithOpenBookSales[i] == msg.sender) {
                     sellerHasOpenBookSale = true;
+                    // save gas and break, if we dont then we will have to loop through all the sales
+                    break;
                 }
             }
 
@@ -215,6 +217,8 @@ contract OpenBookV2 {
                     sales[msg.sender][i].buyerAddress == walletToAdd
                 ) {
                     buyersWalletAlreadyExists = true;
+                    // save gas and break, if we dont then we will have to loop through all the sales
+                    break;
                 }
             }
             require(
@@ -234,6 +238,8 @@ contract OpenBookV2 {
                     msg.sender
                 ) {
                     hasBuyerDealtWithSeller = true;
+                    // save gas and break, if we dont then we will have to loop through all the sales
+                    break;
                 }
             }
 
@@ -368,6 +374,7 @@ contract OpenBookV2 {
             ) {
                 saleIndex = i;
                 saleInfo = sale;
+                break;
             }
         }
         if (saleInfo.price == 0) {
@@ -438,10 +445,8 @@ contract OpenBookV2 {
     function completeSale(
         address seller,
         address presale,
-        address walletToAdd
-    ) public // seller , presale, walletToAdd used to identify the sale
-
-    {
+        address walletToAdd // seller , presale, walletToAdd used to identify the sale
+    ) public {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
 
@@ -457,6 +462,7 @@ contract OpenBookV2 {
             ) {
                 saleIndex = i;
                 saleInfo = sale;
+                break;
             }
         }
 

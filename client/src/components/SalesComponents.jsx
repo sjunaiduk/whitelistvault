@@ -179,15 +179,9 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const SalesCard = ({
-  sale,
-  isSeller = true,
-  refetchSales,
-  setRowSuccess,
-  setRowCancelled,
-}) => {
+const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   const { state } = useEth();
-  const acceptSale = async (sellersAddress, presaleAddress) => {
+  const acceptSale = async (sellersAddress, presaleAddress, price) => {
     console.log(
       `Accepting sale for ${sellersAddress} and presale ${presaleAddress}...`
     );
@@ -195,40 +189,21 @@ const SalesCard = ({
     const priceInWei = sale.price;
     console.log(`Price in wei: ${priceInWei}`);
     await state.contract.methods
-      .acceptSaleAsBuyer(sellersAddress, presaleAddress)
+      .acceptSaleAsBuyer(sellersAddress, presaleAddress, price)
       .send({ from: state.accounts[0], value: priceInWei });
     refetchSales();
   };
 
-  // when we cancel/complete with API changes aren't reflected in UI until refresh after a while, so we
-  // will use state to keep track of the outcome of the API call and display it to the user.
-  const [cancelSaleOutcome, setCancelSaleOutcome] = useState(null);
-  const [completeSaleOutcome, setCompleteSaleOutcome] = useState(null);
-
-  // Call API in future.
   const completeSale = async (sellerAddress, presaleAddress, walletToAdd) => {
     console.log(
       `Completing sale for seller ${sellerAddress}, presale ${presaleAddress} and wallet ${walletToAdd}...`
     );
 
-    const signature = await state.web3.eth.personal.sign(
-      "I'm the real owner",
-      state.accounts[0]
-    );
-
-    console.log(`signature: ${signature}`);
     try {
-      const result = await completeSaleRequest(
-        signature,
-        state.contract._address,
-        sellerAddress,
-        presaleAddress,
-        walletToAdd
-      );
-      console.log("Result of compelte sale call from API: ", result);
-
-      setCompleteSaleOutcome("completed");
-      setRowSuccess();
+      await state.contract.methods
+        .completeSale(sellerAddress, presaleAddress, walletToAdd)
+        .send({ from: state.accounts[0] });
+      refetchSales();
     } catch (e) {
       console.log(e);
     }
@@ -256,34 +231,20 @@ const SalesCard = ({
         console.log(
           `You can't cancel a sale after 5 minutes! (Doing api call to check if sale started and wallet hasn't been added yet - HARDOCDED TO CANCEL FOR TESTS))`
         );
-        const signature = await state.web3.eth.personal.sign(
-          "I'm the real owner",
-          state.accounts[0]
-        );
-        try {
-          await completeCancelRequest(
-            signature,
-            state.contract._address,
-            sellerAddress,
-            presaleAddress,
-            walletToAdd
-          );
-          setCancelSaleOutcome("cancelled");
-          setRowCancelled();
-        } catch (e) {
-          console.log(e);
-        }
       } else {
         console.log("Time diff is less than 5 minutes, cancelling sale...");
-        await state.contract.methods
-          .cancelSale(presaleAddress, walletToAdd, sellerAddress)
-          .send({ from: state.accounts[0] });
       }
+      await state.contract.methods
+        .cancelSale(presaleAddress, walletToAdd, sellerAddress)
+        .send({ from: state.accounts[0] });
     } else {
+      console.log("Seller is cancelling sale....");
       await state.contract.methods
         .cancelSale(presaleAddress, walletToAdd, sellerAddress)
         .send({ from: state.accounts[0] });
     }
+
+    refetchSales();
   };
 
   return (
@@ -291,34 +252,56 @@ const SalesCard = ({
       <h3 className="card__header">Pending Sale</h3>
       <p className="card__text">
         {isSeller
-          ? "Buyer Address: " + sale.buyerAddress
+          ? "Buyer: " + sale.buyerAddress
           : "Seller Address: " + sale.sellerAddress}
         <br />
         Platform: {sale.presalePlatform}
         <br />
-        Price: {(sale.price * 10 ** -18).toFixed(3)} BNB
+        Price: {(sale.price * 10 ** -18).toFixed(4)} BNB
         <br />
+        Presale: {sale.presaleAddress}
+        <br />
+        Presale Start: {new Date(sale.presaleStartTime * 1000).toUTCString()}
+        <br />
+        Presale End: {new Date(sale.presaleEndTime * 1000).toUTCString()}
       </p>
-      {sale.cancelled || cancelSaleOutcome == "cancelled" ? (
-        <span className="cross">Cancelled!!!!</span>
+      {sale.cancelled ? (
+        <span className="cross">Cancelled!</span>
       ) : isSeller ? (
         sale.buyerAcceptedSaleAndSentBnbToContract ? (
-          sale.moneySentToSellerByContract ||
-          completeSaleOutcome == "completed" ? (
+          sale.moneySentToSellerByContract ? (
             <span className="tick">Success!</span>
           ) : (
-            <button
-              className="btn btn--primary"
-              onClick={() => {
-                completeSale(
-                  sale.sellerAddress,
-                  sale.presaleAddress,
-                  sale.buyerAddress
-                );
-              }}
-            >
-              Complete Sale
-            </button>
+            <>
+              <button
+                style={{
+                  marginRight: "10px",
+                }}
+                className="btn btn--primary"
+                onClick={() => {
+                  completeSale(
+                    sale.sellerAddress,
+                    sale.presaleAddress,
+                    sale.buyerAddress
+                  );
+                }}
+              >
+                Complete Sale
+              </button>
+              <button
+                className="btn btn--primary"
+                onClick={() => {
+                  cancelSale(
+                    sale.sellerAddress,
+                    sale.presaleAddress,
+                    sale.buyerAddress,
+                    sale.buyerAcceptedTimestamp
+                  );
+                }}
+              >
+                Cancel
+              </button>
+            </>
           )
         ) : (
           <button
@@ -336,8 +319,7 @@ const SalesCard = ({
           </button>
         )
       ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
-        sale.moneySentToSellerByContract ||
-        completeSaleOutcome == "completed" ? (
+        sale.moneySentToSellerByContract ? (
           <span className="tick">Success!</span>
         ) : (
           <button
@@ -358,7 +340,7 @@ const SalesCard = ({
         <button
           className="btn btn--primary"
           onClick={() => {
-            acceptSale(sale.sellerAddress, sale.presaleAddress);
+            acceptSale(sale.sellerAddress, sale.presaleAddress, sale.price);
           }}
         >
           Accept Sale
