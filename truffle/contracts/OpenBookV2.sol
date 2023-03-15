@@ -221,10 +221,9 @@ contract OpenBookV2 {
                     break;
                 }
             }
-            require(
-                buyersWalletAlreadyExists == false,
-                "You already have an active sale for this wallet"
-            );
+            if (buyersWalletAlreadyExists == false) {
+                revert("You already have an active sale for this wallet");
+            }
 
             bool hasBuyerDealtWithSeller = false;
 
