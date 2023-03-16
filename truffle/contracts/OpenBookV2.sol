@@ -81,12 +81,13 @@ contract OpenBookV2 {
     mapping(address => uint256) totalPendingSalesForSeller;
 
     address public owner;
-    address public feeAddress = owner;
+    address public feeAddress;
     uint8 public feePercentage = 5;
     bool public feesEnabled = true;
 
     constructor() {
         owner = msg.sender;
+        feeAddress = msg.sender;
     }
 
     modifier onlyOwner() {
@@ -396,7 +397,7 @@ contract OpenBookV2 {
         }
 
         if (
-            msg.sender != saleInfo.buyerAddress ||
+            msg.sender != saleInfo.buyerAddress &&
             msg.sender != saleInfo.sellerAddress
         ) {
             revert("You are not the buyer or seller of this sale");
@@ -428,6 +429,17 @@ contract OpenBookV2 {
                     revert(
                         "You can't cancel a sale after 5 minutes of accepting it (as a buyer)"
                     );
+                } else {
+                    bool buyerWalletAdded = isUserWhitelistedCustom(
+                        saleInfo.presaleAddress,
+                        saleInfo.buyerAddress
+                    );
+
+                    if (buyerWalletAdded == true) {
+                        revert(
+                            "Your wallet has already been added to the presale. You can't cancel the sale even if if you recently accepted it"
+                        );
+                    }
                 }
             } else {
                 // presale has started.
