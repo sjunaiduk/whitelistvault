@@ -43,12 +43,14 @@ contract("OpenBook", (accounts) => {
     const noAddress = "0x0000000000000000000000000000000000000000";
     const price = "1000000000000000000";
 
-    await escrowTransactionsInstance.createSale(
+    x = await escrowTransactionsInstance.createSale(
       presaleAddress,
       noAddress,
       price,
       { from: seller }
     );
+
+    console.log(`Gas used for create sale: ${x.receipt.gasUsed}`);
     await escrowTransactionsInstance.createSale(
       presaleAddress,
       noAddress,
@@ -73,6 +75,10 @@ contract("OpenBook", (accounts) => {
           value: price,
         }
       );
+
+    console.log(
+      `Gas used for buyer accept sale: ${buyerAcceptResult.receipt.gasUsed}`
+    );
 
     let openBookSales =
       await escrowTransactionsInstance.getPendingOpenBookSales();

@@ -14,6 +14,33 @@ struct SaleInfo {
     string presalePlatform;
     bool moneySentToSellerByContract;
     uint256 price;
+    uint256 presaleStartTime;
+    uint256 presaleEndTime;
+}
+struct PoolSettings {
+    address token;
+    address currency;
+    uint256 rate;
+    uint256 startTime;
+    uint256 endTime;
+    uint256 presaleRate;
+    uint256 softCap;
+    uint256 hardCap;
+    uint256 listingRate;
+    uint256 liqLockDays;
+    uint128 liquidityPercent;
+    uint128 tokenFeePercent;
+}
+
+interface IPinksaleContract {
+    function getNumberOfWhitelistedUsers() external view returns (uint256);
+
+    function poolSettings() external view returns (PoolSettings memory);
+
+    function getWhitelistedUsers(
+        uint256 startIndex,
+        uint256 endIndex
+    ) external view returns (address[] memory);
 }
 
 struct WalletAddedStats {
@@ -45,7 +72,7 @@ struct BuyerStats {
     // return array
 }
 
-contract OpenBook {
+contract OpenBookV2 {
     mapping(address => SaleInfo[]) sales;
     mapping(address => SellerStats) public sellerStats;
     mapping(address => BuyerStats) public buyerStats;
@@ -53,18 +80,62 @@ contract OpenBook {
     address[] sellersWithOpenBookSales;
     mapping(address => uint256) totalPendingSalesForSeller;
 
-    address owner = 0xd08F6D0571125C6f7Ec137473c1Cb80aee4306EA;
+    address public owner;
+    address public feeAddress;
+    uint8 public feePercentage = 5;
+    bool public feesEnabled = true;
+
+    constructor() {
+        owner = msg.sender;
+        feeAddress = msg.sender;
+    }
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
         _;
     }
 
-    function getSalesForBuyer(address buyer)
-        public
-        view
-        returns (SaleInfo[] memory)
-    {
+    function setFeeAddress(address newFeeAddress) public onlyOwner {
+        feeAddress = newFeeAddress;
+    }
+
+    function setFeePercent(uint8 newFeePercent) public onlyOwner {
+        feePercentage = newFeePercent;
+    }
+
+    function setFeesEnabled(bool newFeesEnabled) public onlyOwner {
+        feesEnabled = newFeesEnabled;
+    }
+
+    function getPoolSettings(
+        address presale
+    ) internal view returns (PoolSettings memory) {
+        IPinksaleContract presaleInstance = IPinksaleContract(presale);
+        return presaleInstance.poolSettings();
+    }
+
+    function isUserWhitelistedCustom(
+        address presale,
+        address user
+    ) internal view returns (bool) {
+        IPinksaleContract presaleInstance = IPinksaleContract(presale);
+        address[] memory users = presaleInstance.getWhitelistedUsers(
+            0,
+            presaleInstance.getNumberOfWhitelistedUsers()
+        );
+
+        for (uint256 i = 0; i < users.length; i++) {
+            if (users[i] == user) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function getSalesForBuyer(
+        address buyer
+    ) public view returns (SaleInfo[] memory) {
         SaleInfo[] memory salesForBuyer = new SaleInfo[](
             buyerStats[buyer].totalSalesBuyerWasPartOf
         );
@@ -94,6 +165,11 @@ contract OpenBook {
         uint256 price
     ) public {
         SaleInfo memory saleInfo;
+        PoolSettings memory poolSettings = getPoolSettings(presale);
+
+        if (block.timestamp > poolSettings.startTime) {
+            revert("Presale has already started");
+        }
 
         if (walletToAdd == address(0)) {
             saleInfo = SaleInfo({
@@ -107,7 +183,9 @@ contract OpenBook {
                 walletAdded: false,
                 presalePlatform: "Pink",
                 moneySentToSellerByContract: false,
-                price: price
+                price: price,
+                presaleStartTime: poolSettings.startTime,
+                presaleEndTime: poolSettings.endTime
             });
 
             totalOpenBookSales++;
@@ -117,6 +195,8 @@ contract OpenBook {
             for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
                 if (sellersWithOpenBookSales[i] == msg.sender) {
                     sellerHasOpenBookSale = true;
+                    // save gas and break, if we dont then we will have to loop through all the sales
+                    break;
                 }
             }
 
@@ -135,7 +215,9 @@ contract OpenBook {
                 walletAdded: false,
                 presalePlatform: "Pink",
                 moneySentToSellerByContract: false,
-                price: price
+                price: price,
+                presaleStartTime: poolSettings.startTime,
+                presaleEndTime: poolSettings.endTime
             });
         }
 
@@ -151,12 +233,13 @@ contract OpenBook {
                     sales[msg.sender][i].buyerAddress == walletToAdd
                 ) {
                     buyersWalletAlreadyExists = true;
+                    // save gas and break, if we dont then we will have to loop through all the sales
+                    break;
                 }
             }
-            require(
-                buyersWalletAlreadyExists == false,
-                "You already have an active sale for this wallet"
-            );
+            if (buyersWalletAlreadyExists == true) {
+                revert("You already have an active sale for this wallet");
+            }
 
             bool hasBuyerDealtWithSeller = false;
 
@@ -170,6 +253,8 @@ contract OpenBook {
                     msg.sender
                 ) {
                     hasBuyerDealtWithSeller = true;
+                    // save gas and break, if we dont then we will have to loop through all the sales
+                    break;
                 }
             }
 
@@ -218,7 +303,11 @@ contract OpenBook {
         return pendingSales;
     }
 
-    function acceptSaleAsBuyer(address seller, address presale) public payable {
+    function acceptSaleAsBuyer(
+        address seller,
+        address presale,
+        uint256 price
+    ) public payable {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
 
@@ -229,7 +318,8 @@ contract OpenBook {
                 sale.presaleAddress == presale &&
                 sale.cancelled == false &&
                 sale.walletAdded == false &&
-                sale.buyerAcceptedSaleAndSentBnbToContract == false
+                sale.buyerAcceptedSaleAndSentBnbToContract == false &&
+                sale.price == price
             ) {
                 saleIndex = i;
                 saleInfo = sale;
@@ -299,16 +389,19 @@ contract OpenBook {
             ) {
                 saleIndex = i;
                 saleInfo = sale;
+                break;
             }
         }
         if (saleInfo.price == 0) {
             revert("Sale does not exist");
         }
-        require(
-            msg.sender == saleInfo.buyerAddress ||
-                msg.sender == saleInfo.sellerAddress,
-            "You are not the buyer or seller of this sale"
-        );
+
+        if (
+            msg.sender != saleInfo.buyerAddress &&
+            msg.sender != saleInfo.sellerAddress
+        ) {
+            revert("You are not the buyer or seller of this sale");
+        }
         require(saleInfo.cancelled == false, "Sale has already been cancelled");
 
         // check if sale has been completed.
@@ -329,66 +422,40 @@ contract OpenBook {
             uint256 timeDifference = block.timestamp -
                 saleInfo.buyerAcceptedTimestamp;
 
-            require(
-                timeDifference < 5 minutes,
-                "You can't cancel a sale after 5 minutes of accepting it (as a buyer)"
-            );
-        }
+            // if presale hasn't started yet
+            if (saleInfo.presaleStartTime >= block.timestamp) {
+                // if it's been more than 5 minutes. revert.
+                if (timeDifference > 5 minutes) {
+                    revert(
+                        "You can't cancel a sale after 5 minutes of accepting it (as a buyer)"
+                    );
+                } else {
+                    bool buyerWalletAdded = isUserWhitelistedCustom(
+                        saleInfo.presaleAddress,
+                        saleInfo.buyerAddress
+                    );
 
-        saleInfo.cancelled = true;
+                    if (buyerWalletAdded == true) {
+                        revert(
+                            "Your wallet has already been added to the presale. You can't cancel the sale even if if you recently accepted it"
+                        );
+                    }
+                }
+            } else {
+                // presale has started.
+                // check if buyers wallet was added.
+                bool buyerWalletAdded = isUserWhitelistedCustom(
+                    saleInfo.presaleAddress,
+                    saleInfo.buyerAddress
+                );
 
-        // if buyer sent BNB to ca refund him.
-        if (saleInfo.buyerAcceptedSaleAndSentBnbToContract == true) {
-            payable(saleInfo.buyerAddress).transfer(saleInfo.price);
-        }
-
-        sellerStats[sellersAddress].totalSalesCancelled++;
-        sellerStats[sellersAddress].totalSalesPending--;
-        sales[sellersAddress][saleIndex] = saleInfo;
-    }
-
-    // Owner can call on behalf of buyer if wallet isnt added after presale started.
-    function cancelSaleAsBuyer(
-        address presale,
-        address walletToAdd,
-        address sellersAddress
-    ) public onlyOwner {
-        SaleInfo memory saleInfo;
-        uint256 saleIndex;
-
-        for (uint256 i = 0; i < sellerStats[sellersAddress].totalSales; i++) {
-            SaleInfo memory sale = sales[sellersAddress][i];
-
-            if (
-                sale.presaleAddress == presale &&
-                sale.cancelled == false &&
-                sale.walletAdded == false &&
-                sale.buyerAddress == walletToAdd
-            ) {
-                saleIndex = i;
-                saleInfo = sale;
+                if (buyerWalletAdded == true) {
+                    revert(
+                        "Your wallet has already been added to the presale. You can't cancel the sale"
+                    );
+                }
             }
         }
-        if (saleInfo.price == 0) {
-            revert("Sale does not exist");
-        }
-        require(
-            msg.sender == saleInfo.buyerAddress ||
-                msg.sender == saleInfo.sellerAddress ||
-                msg.sender == owner,
-            "You are not the buyer or seller of this sale"
-        );
-        require(saleInfo.cancelled == false, "Sale has already been cancelled");
-
-        // check if sale has been completed.
-        require(
-            saleInfo.walletAdded == false,
-            "Wallet has already been added to the presale"
-        );
-        require(
-            saleInfo.moneySentToSellerByContract == false,
-            "Money has already been sent to the seller"
-        );
 
         saleInfo.cancelled = true;
 
@@ -405,8 +472,8 @@ contract OpenBook {
     function completeSale(
         address seller,
         address presale,
-        address walletToAdd
-    ) public onlyOwner {
+        address walletToAdd // seller , presale, walletToAdd used to identify the sale
+    ) public {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
 
@@ -422,6 +489,7 @@ contract OpenBook {
             ) {
                 saleIndex = i;
                 saleInfo = sale;
+                break;
             }
         }
 
@@ -444,15 +512,30 @@ contract OpenBook {
             "Money has already been sent to the seller"
         );
 
-        saleInfo.walletAdded = true;
+        bool buyerWalletAdded = isUserWhitelistedCustom(
+            saleInfo.presaleAddress,
+            saleInfo.buyerAddress
+        );
 
-        if (saleInfo.buyerAcceptedSaleAndSentBnbToContract == true) {
-            payable(seller).transfer(saleInfo.price);
-            saleInfo.moneySentToSellerByContract = true;
+        if (buyerWalletAdded == false) {
+            revert("Buyer's wallet has not been added to the presale");
+        } else {
+            saleInfo.walletAdded = true;
+
+            if (saleInfo.buyerAcceptedSaleAndSentBnbToContract == true) {
+                if (feesEnabled == true) {
+                    uint256 fee = (saleInfo.price * feePercentage) / 100;
+                    payable(feeAddress).transfer(fee);
+                    payable(seller).transfer(saleInfo.price - fee);
+                } else {
+                    payable(seller).transfer(saleInfo.price);
+                }
+                saleInfo.moneySentToSellerByContract = true;
+            }
+            sales[seller][saleIndex] = saleInfo;
+            sellerStats[seller].totalSalesSuccessful++;
+            sellerStats[seller].totalSalesPending--;
         }
-        sales[seller][saleIndex] = saleInfo;
-        sellerStats[seller].totalSalesSuccessful++;
-        sellerStats[seller].totalSalesPending--;
     }
 
     // assume that for the same presale, a buyer can have a cancelled sale with the same wallet address,
@@ -487,17 +570,19 @@ contract OpenBook {
         return saleInfo;
     }
 
-    function getSalesForSeller(address seller)
-        public
-        view
-        returns (SaleInfo[] memory)
-    {
+    function getSalesForSeller(
+        address seller
+    ) public view returns (SaleInfo[] memory) {
         return sales[seller];
     }
 
     receive() external payable {}
 
-    function withdraw() public {
-        payable(msg.sender).transfer(address(this).balance);
+    function withdraw() public onlyOwner {
+        payable(owner).transfer(address(this).balance);
+    }
+
+    function setOwner(address _owner) public onlyOwner {
+        owner = _owner;
     }
 }
