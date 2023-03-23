@@ -8,11 +8,11 @@ import App from "./App";
 import { EthProvider } from "./contexts/EthContext";
 import { WagmiConfig, createClient } from "wagmi";
 import { ConnectKitProvider, getDefaultClient } from "connectkit";
-import { mainnet } from "wagmi";
+import { bscTestnet } from "wagmi/chains";
 
 const client = createClient(
   getDefaultClient({
-    chains: [mainnet],
+    chains: [bscTestnet],
   })
 );
 
