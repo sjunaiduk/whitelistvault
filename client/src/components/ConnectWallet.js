@@ -1,23 +1,48 @@
-import { useEth } from "../contexts/EthContext";
+import { ConnectKitButton } from "connectkit";
+import { useAccount, useDisconnect } from "wagmi";
 
 export const ConnectWallet = () => {
-  const { tryInit, state, logout } = useEth();
+  const { disconnect } = useDisconnect();
+  const { address } = useAccount();
 
   return (
     <>
-      {state.accounts?.length ? (
+      {address ? (
         <>
-          <button className="btn btn--primary" type="button" onClick={logout}>
+          <button
+            className="btn btn--primary"
+            type="button"
+            onClick={disconnect}
+          >
             Logout
           </button>
         </>
       ) : (
         <>
-          <button className="btn btn--primary" onClick={tryInit}>
-            Connect
-          </button>
+          <ConnectKitButton.Custom>
+            {({
+              isConnected,
+              isConnecting,
+              show,
+              hide,
+              address,
+              ensName,
+              chain,
+            }) => {
+              return (
+                <button onClick={show} className="btn btn--primary">
+                  Connect
+                </button>
+              );
+            }}
+          </ConnectKitButton.Custom>
         </>
       )}
     </>
   );
 };
+/**
+ *  background-image: linear-gradient(to right, #fe4bc6, #f30baa 40%);
+  background-position: right;
+  background-size: 300%;
+ */

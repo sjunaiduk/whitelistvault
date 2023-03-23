@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
 import { useEth } from "../contexts/EthContext";
-import { completeSaleRequest, completeCancelRequest } from "../apiInteractor";
 
 /*
 struct SaleInfo {
