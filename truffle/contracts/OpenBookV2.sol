@@ -315,11 +315,11 @@ contract OpenBookV2 {
             SaleInfo memory sale = sales[seller][i];
 
             if (
-                sale.presaleAddress == presale &&
-                sale.cancelled == false &&
-                sale.walletAdded == false &&
-                sale.buyerAcceptedSaleAndSentBnbToContract == false &&
-                sale.price == price
+                (sale.presaleAddress == presale &&
+                    sale.cancelled == false &&
+                    sale.walletAdded == false &&
+                    sale.buyerAcceptedSaleAndSentBnbToContract == false &&
+                    sale.price == price)
             ) {
                 saleIndex = i;
                 saleInfo = sale;
@@ -328,6 +328,13 @@ contract OpenBookV2 {
                 // this is the sale we want to accept, can be open booking or specific wallet
             }
         }
+
+        require(
+            saleInfo.buyerAddress == address(0) ||
+                saleInfo.buyerAddress == msg.sender,
+            "You are not the buyer for this sale nor is it an open book sale"
+        );
+
         if (saleInfo.price == 0) {
             revert("Sale does not exist");
         }
@@ -430,6 +437,7 @@ contract OpenBookV2 {
                         "You can't cancel a sale after 5 minutes of accepting it (as a buyer)"
                     );
                 } else {
+                    // THIS COULD BE ERRORING OUT. CHECK IT OUT.
                     bool buyerWalletAdded = isUserWhitelistedCustom(
                         saleInfo.presaleAddress,
                         saleInfo.buyerAddress

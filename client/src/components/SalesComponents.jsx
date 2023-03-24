@@ -7,6 +7,7 @@ import {
   useContractWrite,
   useNetwork,
   useContractRead,
+  useWaitForTransaction,
 } from "wagmi";
 
 import { ethers } from "ethers";
@@ -33,12 +34,15 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
     data: sales,
     isError,
     isLoading,
+    refetch,
   } = useContractRead({
     abi: escrowAbi.abi,
     address: escrowAbi.networks[chain.id].address,
     functionName: isSeller ? "getSalesForSeller" : "getSalesForBuyer",
     args: [usersAddress],
-    cacheTime: 15_000,
+    onSuccess: (data) => {
+      console.log("data", data);
+    },
   });
 
   //const [sales, setSales] = useState(null);
@@ -176,6 +180,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
                       setRowCancelled={() => {
                         updateSpecificSaleByIndex(index, "cancelled");
                       }}
+                      refetchSales={refetch}
                     />
                   </ul>
                 ))
@@ -205,11 +210,7 @@ const isInvalidAddress = (address) => {
   return invalid;
 };
 const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
-  const { state } = useEth();
-
   const { chain } = useNetwork();
-
-  const { address } = useAccount();
 
   const { config: acceptSaleConfig } = usePrepareContractWrite({
     address: escrowAbi.networks[chain.id].address,
@@ -217,12 +218,25 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
     functionName: "acceptSaleAsBuyer",
     args: [sale.sellerAddress, sale.presaleAddress, sale.price],
     enabled: !sale.buyerAcceptedSaleAndSentBnbToContract && !sale.cancelled,
+
     overrides: {
       value: sale.price,
     },
   });
 
-  const { writeAsync: acceptSaleAsync } = useContractWrite(acceptSaleConfig);
+  const { writeAsync: acceptSaleAsync, data: acceptSaleTxData } =
+    useContractWrite(acceptSaleConfig);
+
+  const { isLoading: isAcceptSaleLoading } = useWaitForTransaction({
+    hash: acceptSaleTxData?.hash,
+    onSuccess: () => {
+      console.log(
+        "Accept sale success, refetching sales, this sale card: ",
+        sale
+      );
+      refetchSales();
+    },
+  });
 
   const { config: completeSaleConfig } = usePrepareContractWrite({
     address: escrowAbi.networks[chain.id].address,
@@ -238,32 +252,46 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
     },
   });
 
-  const { writeAsync: completeSaleAsync } =
+  const { writeAsync: completeSaleAsync, data: completeSaleTxData } =
     useContractWrite(completeSaleConfig);
 
-  const acceptSale = async (sellersAddress, presaleAddress, price) => {
-    console.log(
-      `Accepting sale for ${sellersAddress} and presale ${presaleAddress}...`
-    );
-
-    await acceptSaleAsync();
-    refetchSales();
-  };
-
-  const { config: cancelSaleConfig } = usePrepareContractWrite({
-    address: escrowAbi.networks[chain.id].address,
-    abi: escrowAbi.abi,
-    functionName: "cancelSale",
-    args: [sale.presaleAddress, sale.buyerAddress, sale.sellerAddress],
-    enabled: !sale.cancelled && !sale.moneySentToSellerByContract,
-
-    onError: (error) => {
-      console.log("Cancel sale error: ", error);
+  const { isLoading: isCompletingSale } = useWaitForTransaction({
+    hash: completeSaleTxData?.hash,
+    onSuccess: () => {
+      refetchSales();
     },
   });
 
-  const { writeAsync: cancelSaleAsync, isLoading: isCancellingSale } =
-    useContractWrite(cancelSaleConfig);
+  const acceptSale = async () => {
+    await acceptSaleAsync();
+  };
+
+  const { config: cancelSaleConfig, isError: isCancelSaleConfigError } =
+    usePrepareContractWrite({
+      address: escrowAbi.networks[chain.id].address,
+      abi: escrowAbi.abi,
+      functionName: "cancelSale",
+      args: [sale.presaleAddress, sale.buyerAddress, sale.sellerAddress],
+      enabled: !sale.cancelled && !sale.moneySentToSellerByContract,
+
+      onError: (error) => {
+        console.log("Cancel sale error: ", error, "sale: ", sale);
+      },
+    });
+
+  const {
+    writeAsync: cancelSaleAsync,
+    isLoading: isCancellingSale,
+    data: cancelSaleTxData,
+  } = useContractWrite(cancelSaleConfig);
+
+  const { isLoading: cancelTxLoading, isSuccess: cancelTxSuccess } =
+    useWaitForTransaction({
+      hash: cancelSaleTxData?.hash,
+      onSuccess: () => {
+        refetchSales();
+      },
+    });
 
   const completeSale = async (sellerAddress, presaleAddress, walletToAdd) => {
     console.log(
@@ -308,9 +336,6 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
           ) : (
             <>
               <button
-                style={{
-                  marginRight: "10px",
-                }}
                 className="btn btn--primary"
                 onClick={() => {
                   completeSale(
@@ -319,8 +344,18 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                     sale.buyerAddress
                   );
                 }}
+                disabled={isCompletingSale}
+                style={
+                  isCompletingSale
+                    ? {
+                        marginRight: "10px",
+                        cursor: "not-allowed",
+                        opacity: "0.5",
+                      }
+                    : { marginRight: "10px" }
+                }
               >
-                Complete Sale
+                {isCompletingSale ? "Completing..." : "Complete"}
               </button>
               <button
                 className="btn btn--primary"
@@ -332,44 +367,77 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                     sale.buyerAcceptedTimestamp
                   );
                 }}
-                disabled={isCancellingSale}
+                disabled={cancelTxLoading || isCancelSaleConfigError}
+                style={
+                  cancelTxLoading || isCancelSaleConfigError
+                    ? { cursor: "not-allowed", opacity: "0.5" }
+                    : {}
+                }
               >
-                {isCancellingSale ? "Cancelling..." : "Cancel"}
+                {cancelTxLoading ? "Cancelling..." : "Cancel"}
               </button>
             </>
           )
         ) : (
-          <button
-            className="btn btn--primary"
-            onClick={() => {
-              cancelSale(
-                sale.sellerAddress,
-                sale.presaleAddress,
-                sale.buyerAddress,
-                sale.buyerAcceptedTimestamp
-              );
-            }}
-          >
-            Cancel
-          </button>
+          <>
+            <button
+              className="btn btn--primary"
+              onClick={() => {
+                cancelSale(
+                  sale.sellerAddress,
+                  sale.presaleAddress,
+                  sale.buyerAddress,
+                  sale.buyerAcceptedTimestamp
+                );
+              }}
+              disabled={cancelTxLoading || isCancelSaleConfigError}
+              style={
+                cancelTxLoading || isCancelSaleConfigError
+                  ? { cursor: "not-allowed", opacity: "0.5" }
+                  : {}
+              }
+            >
+              {cancelTxLoading ? "Cancelling..." : "Cancel"}
+            </button>
+            <br />
+            {isCancelSaleConfigError && (
+              <span className="card__error">Wait until presale starts</span>
+            )}
+          </>
         )
       ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
         sale.moneySentToSellerByContract ? (
           <span className="tick">Success!</span>
         ) : (
-          <button
-            className="btn btn--primary"
-            onClick={() => {
-              cancelSale(
-                sale.sellerAddress,
-                sale.presaleAddress,
-                sale.buyerAddress,
-                sale.buyerAcceptedTimestamp
-              );
-            }}
-          >
-            Cancel
-          </button>
+          <>
+            <button
+              className="btn btn--primary"
+              onClick={() => {
+                cancelSale(
+                  sale.sellerAddress,
+                  sale.presaleAddress,
+                  sale.buyerAddress,
+                  sale.buyerAcceptedTimestamp
+                );
+              }}
+              // disabled={cancelTxLoading || isCancelSaleConfigError}
+              // style={
+              //   cancelTxLoading || isCancelSaleConfigError
+              //     ? { cursor: "not-allowed", opacity: "0.5" }
+              //     : {}
+              // }
+            >
+              {cancelTxLoading ? "Cancelling..." : "Cancel"}
+            </button>
+            <br />
+            {isCancelSaleConfigError ? (
+              <span className="card__error">Wait until presale starts</span>
+            ) : (
+              <span className="card__error">
+                You can cancel within 5 minutes
+              </span>
+            )}
+          </>
         )
       ) : (
         <button
@@ -377,8 +445,12 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
           onClick={() => {
             acceptSale(sale.sellerAddress, sale.presaleAddress, sale.price);
           }}
+          disabled={isAcceptSaleLoading}
+          style={
+            isAcceptSaleLoading ? { cursor: "not-allowed", opacity: "0.5" } : {}
+          }
         >
-          Accept Sale
+          {isAcceptSaleLoading ? "Accepting..." : "Accept Sale"}
         </button>
       )}
     </div>
@@ -395,35 +467,43 @@ export const CreateSale = () => {
   const [walletToAdd, setWalletToAdd] = useState("");
   const [price, setPrice] = useState(0);
 
-  const { config: createSaleConfig, isError: createSalePrepareTxFailed } =
-    usePrepareContractWrite({
-      address: escrowAbi.networks[chain.id].address,
-      functionName: "createSale",
-      abi: escrowAbi.abi,
-      args: [
-        presaleAddress,
-        walletToAdd,
-        price > 0 ? ethers.utils.parseEther(price).toString() : 0,
-      ],
-      enabled: !(
-        isInvalidAddress(presaleAddress) || isInvalidAddress(walletToAdd)
-      ),
-      cacheTime: 5000,
-      onSettled: () => {
-        console.log("Create sale settled");
+  const {
+    config: createSaleConfig,
+    isError: createSalePrepareTxFailed,
+    refetch,
+  } = usePrepareContractWrite({
+    address: escrowAbi.networks[chain.id].address,
+    functionName: "createSale",
+    abi: escrowAbi.abi,
+    args: [
+      presaleAddress,
+      walletToAdd,
+      price > 0 ? ethers.utils.parseEther(price).toString() : 0,
+    ],
+    enabled:
+      !isInvalidAddress(presaleAddress) &&
+      !isInvalidAddress(walletToAdd) &&
+      !!price,
+    onSettled: () => {
+      console.log("Create sale settled");
+    },
+  });
+
+  const { write: createSaleAsync, data: createSaleResult } =
+    useContractWrite(createSaleConfig);
+
+  const { isLoading: createSaleTransactionLoading, isSuccess } =
+    useWaitForTransaction({
+      hash: createSaleResult?.hash,
+      onSuccess: () => {
+        console.log("Create sale transaction success");
+        refetch();
+      },
+      onError: (error) => {
+        console.log("Create sale transaction error: ", error);
       },
     });
 
-  const { write: createSaleAsync, isLoading: createSaleLoading } =
-    useContractWrite(createSaleConfig);
-
-  const createSale = async () => {
-    console.log(
-      `Creating sale for presale ${presaleAddress} and wallet ${walletToAdd}, price ${price}...`
-    );
-
-    await createSaleAsync();
-  };
   return (
     <div>
       {address ? (
@@ -484,7 +564,7 @@ export const CreateSale = () => {
                 required
                 type="decimal"
                 placeholder="Price"
-                class="form-group__input"
+                className="form-group__input"
                 onChange={(e) => setPrice(e.target.value)}
               />
             </div>
@@ -498,14 +578,16 @@ export const CreateSale = () => {
                 isInvalidAddress(walletToAdd) ||
                 isInvalidAddress(presaleAddress) ||
                 createSalePrepareTxFailed ||
-                createSaleLoading
+                createSaleTransactionLoading
                   ? { opacity: 0.5, cursor: "not-allowed" }
                   : { opacity: 1 }
               }
-              onClick={createSale}
-              class="btn btn--primary"
+              onClick={createSaleAsync}
+              className="btn btn--primary"
             >
-              {createSaleLoading ? "Creating Sale..." : "Create Sale"}
+              {createSaleTransactionLoading
+                ? "Creating Sale..."
+                : "Create Sale"}
             </button>
           </form>
         </>
