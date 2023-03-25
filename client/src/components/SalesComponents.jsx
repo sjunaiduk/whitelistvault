@@ -244,18 +244,19 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
 
   useEffect(() => {
     let timeOut;
-    if (isAcceptSaleSuccess) {
+    if (sale.buyerAcceptedSaleAndSentBnbToContract && !sale.cancelled) {
       console.log(
-        "Accept sale success, refetching cancel sale config every 60s"
+        "This sale has been accepted by buyer, and is not cancelled. Refetching cancel sale config every 10 seconds. sale: ",
+        sale
       );
       timeOut = setInterval(() => {
         refetchCancelSaleConfig();
-      }, 60000);
+      }, 10000);
     }
     return () => {
       clearInterval(timeOut);
     };
-  }, [isAcceptSaleSuccess]);
+  }, [sale]);
 
   const {
     config: completeSaleConfig,
@@ -313,6 +314,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   const {
     config: cancelSaleConfig,
     isError: isCancelSaleConfigError,
+    error: cancelSaleConfigError,
     refetch: refetchCancelSaleConfig,
   } = usePrepareContractWrite({
     address: escrowAbi.networks[chain.id].address,
@@ -462,9 +464,16 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
               {cancelTxLoading ? "Cancelling..." : "Cancel"}
             </button>
             <br />
-            {isCancelSaleConfigError && (
-              <span className="card__error">Wait until presale starts</span>
-            )}
+            {isCancelSaleConfigError &&
+              (cancelSaleConfigError?.error?.data?.message.includes(
+                "wallet has already been added"
+              ) ? (
+                <span className="card__error">
+                  Your wallet has already been added!
+                </span>
+              ) : (
+                <span className="card__error">Wait until presale starts</span>
+              ))}
           </>
         )
       ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
@@ -492,9 +501,19 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
               {cancelTxLoading ? "Cancelling..." : "Cancel"}
             </button>
             <br />
-            {isCancelSaleConfigError ? (
-              <span className="card__error">Wait until presale starts</span>
-            ) : (
+            {cancelSaleConfigError &&
+              (cancelSaleConfigError?.error?.data?.message.includes(
+                "wallet has already been added"
+              ) ? (
+                <span className="card__error">
+                  Your wallet has already been added!
+                </span>
+              ) : (
+                <span className="card__error">
+                  Wait until presale starts!!!
+                </span>
+              ))}
+            {!isCancelSaleConfigError && (
               <span className="card__error">
                 You can cancel within 5 minutes
               </span>
