@@ -204,7 +204,6 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
   );
 };
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const isInvalidAddress = (address) => {
   const invalid = !ethers.utils.isAddress(address);
   return invalid;
@@ -217,7 +216,10 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
     abi: escrowAbi.abi,
     functionName: "acceptSaleAsBuyer",
     args: [sale.sellerAddress, sale.presaleAddress, sale.price],
-    enabled: !sale.buyerAcceptedSaleAndSentBnbToContract && !sale.cancelled,
+    enabled:
+      !sale.buyerAcceptedSaleAndSentBnbToContract &&
+      !sale.cancelled &&
+      !isSeller,
 
     overrides: {
       value: sale.price,
@@ -227,18 +229,39 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   const { writeAsync: acceptSaleAsync, data: acceptSaleTxData } =
     useContractWrite(acceptSaleConfig);
 
-  const { isLoading: isAcceptSaleLoading } = useWaitForTransaction({
-    hash: acceptSaleTxData?.hash,
-    onSuccess: () => {
-      console.log(
-        "Accept sale success, refetching sales, this sale card: ",
-        sale
-      );
-      refetchSales();
-    },
-  });
+  const { isLoading: isAcceptSaleLoading, isSuccess: isAcceptSaleSuccess } =
+    useWaitForTransaction({
+      hash: acceptSaleTxData?.hash,
+      onSuccess: () => {
+        console.log(
+          "Accept sale success, refetching cancel sale config. this sale card: ",
+          sale
+        );
+        refetchCancelSaleConfig();
+        refetchSales();
+      },
+    });
 
-  const { config: completeSaleConfig } = usePrepareContractWrite({
+  useEffect(() => {
+    let timeOut;
+    if (isAcceptSaleSuccess) {
+      console.log(
+        "Accept sale success, refetching cancel sale config every 60s"
+      );
+      timeOut = setInterval(() => {
+        refetchCancelSaleConfig();
+      }, 60000);
+    }
+    return () => {
+      clearInterval(timeOut);
+    };
+  }, [isAcceptSaleSuccess]);
+
+  const {
+    config: completeSaleConfig,
+    refetch: refetchCompleteSaleConfig,
+    isError: isCompleteSaleConfigError,
+  } = usePrepareContractWrite({
     address: escrowAbi.networks[chain.id].address,
     abi: escrowAbi.abi,
     functionName: "completeSale",
@@ -246,11 +269,32 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
     enabled:
       sale.buyerAcceptedSaleAndSentBnbToContract &&
       !sale.cancelled &&
-      !sale.moneySentToSellerByContract,
+      !sale.moneySentToSellerByContract &&
+      isSeller,
     onError: (error) => {
       console.log("Complete sale error: ", error);
     },
   });
+
+  useEffect(() => {
+    let interval;
+    if (
+      isSeller &&
+      sale.buyerAcceptedSaleAndSentBnbToContract &&
+      !sale.cancelled &&
+      !sale.moneySentToSellerByContract
+    ) {
+      console.log("is seller, refetching complete sale config every 60s");
+      interval = setInterval(() => {
+        console.log("refetching complete sale config");
+        refetchCompleteSaleConfig();
+      }, 30000);
+    }
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isSeller, sale]);
 
   const { writeAsync: completeSaleAsync, data: completeSaleTxData } =
     useContractWrite(completeSaleConfig);
@@ -266,24 +310,36 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
     await acceptSaleAsync();
   };
 
-  const { config: cancelSaleConfig, isError: isCancelSaleConfigError } =
-    usePrepareContractWrite({
-      address: escrowAbi.networks[chain.id].address,
-      abi: escrowAbi.abi,
-      functionName: "cancelSale",
-      args: [sale.presaleAddress, sale.buyerAddress, sale.sellerAddress],
-      enabled: !sale.cancelled && !sale.moneySentToSellerByContract,
-
-      onError: (error) => {
-        console.log("Cancel sale error: ", error, "sale: ", sale);
-      },
-    });
-
   const {
-    writeAsync: cancelSaleAsync,
-    isLoading: isCancellingSale,
-    data: cancelSaleTxData,
-  } = useContractWrite(cancelSaleConfig);
+    config: cancelSaleConfig,
+    isError: isCancelSaleConfigError,
+    refetch: refetchCancelSaleConfig,
+  } = usePrepareContractWrite({
+    address: escrowAbi.networks[chain.id].address,
+    abi: escrowAbi.abi,
+    functionName: "cancelSale",
+    args: [sale.presaleAddress, sale.buyerAddress, sale.sellerAddress],
+    enabled:
+      !sale.cancelled &&
+      !sale.moneySentToSellerByContract &&
+      (!isSeller ? sale.buyerAcceptedSaleAndSentBnbToContract : true),
+
+    onError: (error) => {
+      console.log(
+        "Cancel sale error: ",
+        error,
+        "sale: ",
+        sale,
+        "enabled: ",
+        !sale.cancelled &&
+          !sale.moneySentToSellerByContract &&
+          (!isSeller ? sale.buyerAcceptedSaleAndSentBnbToContract : true)
+      );
+    },
+  });
+
+  const { writeAsync: cancelSaleAsync, data: cancelSaleTxData } =
+    useContractWrite(cancelSaleConfig);
 
   const { isLoading: cancelTxLoading, isSuccess: cancelTxSuccess } =
     useWaitForTransaction({
@@ -344,9 +400,9 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                     sale.buyerAddress
                   );
                 }}
-                disabled={isCompletingSale}
+                disabled={isCompletingSale || isCompleteSaleConfigError}
                 style={
-                  isCompletingSale
+                  isCompletingSale || isCompleteSaleConfigError
                     ? {
                         marginRight: "10px",
                         cursor: "not-allowed",
@@ -376,6 +432,12 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
               >
                 {cancelTxLoading ? "Cancelling..." : "Cancel"}
               </button>
+              <br />
+              {isCompleteSaleConfigError && (
+                <span className="card__error">
+                  Wait until buyers wallet is added to presale
+                </span>
+              )}
             </>
           )
         ) : (
@@ -420,12 +482,12 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                   sale.buyerAcceptedTimestamp
                 );
               }}
-              // disabled={cancelTxLoading || isCancelSaleConfigError}
-              // style={
-              //   cancelTxLoading || isCancelSaleConfigError
-              //     ? { cursor: "not-allowed", opacity: "0.5" }
-              //     : {}
-              // }
+              disabled={cancelTxLoading || isCancelSaleConfigError}
+              style={
+                cancelTxLoading || isCancelSaleConfigError
+                  ? { cursor: "not-allowed", opacity: "0.5" }
+                  : {}
+              }
             >
               {cancelTxLoading ? "Cancelling..." : "Cancel"}
             </button>

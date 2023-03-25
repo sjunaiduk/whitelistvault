@@ -119,6 +119,11 @@ contract OpenBookV2 {
         address user
     ) internal view returns (bool) {
         IPinksaleContract presaleInstance = IPinksaleContract(presale);
+        uint numberOfWhitelistedUsers = presaleInstance
+            .getNumberOfWhitelistedUsers();
+        if (numberOfWhitelistedUsers == 0) {
+            return false;
+        }
         address[] memory users = presaleInstance.getWhitelistedUsers(
             0,
             presaleInstance.getNumberOfWhitelistedUsers()
@@ -377,6 +382,11 @@ contract OpenBookV2 {
 
     // both seller and buyer can cancel a sale. here buyer can onlu cancel within 5 minutes of accepting the sale
 
+    event SaleCancelled(address seller, address buyer, uint256 amount);
+    event RefundChecks(address buyer, uint256 amount);
+    event RefundSent(address buyer, uint256 amount);
+    event CustomLogInfo(string message);
+
     function cancelSale(
         address presale,
         address walletToAdd,
@@ -384,6 +394,9 @@ contract OpenBookV2 {
     ) public {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
+
+        // deal with scenario when buyer hasnt accepted and is trying to cancel.
+        // rn it deals by saying that time difference is block.timestamp .
 
         for (uint256 i = 0; i < sellerStats[sellersAddress].totalSales; i++) {
             SaleInfo memory sale = sales[sellersAddress][i];
@@ -399,6 +412,14 @@ contract OpenBookV2 {
                 break;
             }
         }
+
+        if (msg.sender == walletToAdd) {
+            require(
+                saleInfo.buyerAcceptedTimestamp != 0,
+                "You have not accepted this sale yet"
+            );
+        }
+
         if (saleInfo.price == 0) {
             revert("Sale does not exist");
         }
@@ -426,17 +447,23 @@ contract OpenBookV2 {
         // Buyer can't. Seller may have submitted the wallet, before it get's added he can maliciously cancel the sale and get a refund.
         // He can only cancel within 5 minutes of accepting the sale.
         if (msg.sender == saleInfo.buyerAddress) {
+            emit CustomLogInfo("buyer is cancelling the sale");
+
             uint256 timeDifference = block.timestamp -
                 saleInfo.buyerAcceptedTimestamp;
 
             // if presale hasn't started yet
             if (saleInfo.presaleStartTime >= block.timestamp) {
+                emit CustomLogInfo("presale hasn't started yet");
                 // if it's been more than 5 minutes. revert.
                 if (timeDifference > 5 minutes) {
                     revert(
                         "You can't cancel a sale after 5 minutes of accepting it (as a buyer)"
                     );
                 } else {
+                    emit CustomLogInfo(
+                        "presale hasn't started yet, but less than 5 minutes"
+                    );
                     // THIS COULD BE ERRORING OUT. CHECK IT OUT.
                     bool buyerWalletAdded = isUserWhitelistedCustom(
                         saleInfo.presaleAddress,
@@ -448,8 +475,10 @@ contract OpenBookV2 {
                             "Your wallet has already been added to the presale. You can't cancel the sale even if if you recently accepted it"
                         );
                     }
+                    emit CustomLogInfo("buyer wallet added is false");
                 }
             } else {
+                emit CustomLogInfo("presale has started");
                 // presale has started.
                 // check if buyers wallet was added.
                 bool buyerWalletAdded = isUserWhitelistedCustom(
@@ -462,19 +491,35 @@ contract OpenBookV2 {
                         "Your wallet has already been added to the presale. You can't cancel the sale"
                     );
                 }
+
+                emit CustomLogInfo("buyer wallet added is false");
             }
         }
 
+        emit SaleCancelled(
+            saleInfo.sellerAddress,
+            saleInfo.buyerAddress,
+            saleInfo.price
+        );
         saleInfo.cancelled = true;
 
+        emit RefundChecks(saleInfo.buyerAddress, saleInfo.price);
         // if buyer sent BNB to ca refund him.
         if (saleInfo.buyerAcceptedSaleAndSentBnbToContract == true) {
-            payable(saleInfo.buyerAddress).transfer(saleInfo.price);
+            bool refunded = payable(saleInfo.buyerAddress).send(saleInfo.price);
+
+            require(refunded == true, "Refund failed");
         }
 
+        emit RefundSent(saleInfo.buyerAddress, saleInfo.price);
+
+        emit CustomLogInfo("updating seller stats");
         sellerStats[sellersAddress].totalSalesCancelled++;
+        emit CustomLogInfo("Total sales cancelled updated");
         sellerStats[sellersAddress].totalSalesPending--;
+        emit CustomLogInfo("Total sales pending updated");
         sales[sellersAddress][saleIndex] = saleInfo;
+        emit CustomLogInfo("Sale info updated");
     }
 
     function completeSale(
