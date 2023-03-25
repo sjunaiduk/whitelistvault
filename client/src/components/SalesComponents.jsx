@@ -244,7 +244,11 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
 
   useEffect(() => {
     let timeOut;
-    if (sale.buyerAcceptedSaleAndSentBnbToContract && !sale.cancelled) {
+    if (
+      sale.buyerAcceptedSaleAndSentBnbToContract &&
+      !sale.cancelled &&
+      !sale.moneySentToSellerByContract
+    ) {
       console.log(
         "This sale has been accepted by buyer, and is not cancelled. Refetching cancel sale config every 10 seconds. sale: ",
         sale
