@@ -386,15 +386,48 @@ body {
   border: 1px solid #ff5bca;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.211);
   margin-bottom: 3rem;
+  max-width: 760px;
+}
+
+.card__action--info span {
+  margin-top: 1rem;
+  width: 100%;
 }
 
 .card__header {
-  margin: 0;
+  text-align: center;
+  margin: 0 0 2rem;
+
   font-size: 3.5rem;
 }
 
 .card__text {
-  letter-spacing: 0px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card__address {
+  word-break: break-all;
+}
+
+.card__pair {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgb(255 255 255 / 29%);
+  padding: 1rem;
+  padding-bottom: 1rem;
+}
+
+.card__pair .btn {
+  margin: 0 !important;
+}
+
+.card__pair .card__error {
+  margin-top: 1rem;
+  width: 100%;
+  text-align: center;
 }
 
 .card .btn {
@@ -465,12 +498,13 @@ body {
   padding: 0;
   border: 0;
   opacity: 0;
-  margin: 0;
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
 .row-action--expanded .card {
   margin-top: 2rem;
-  max-height: 400px;
+  max-height: 1000px;
   border: 0;
   opacity: 1;
 }
@@ -549,7 +583,7 @@ body {
 
 @media screen and (min-width: 768px) {
   .table .card {
-    margin: 3rem 5rem;
+    margin: 3rem auto;
     overflow: hidden;
   }
   .table {
@@ -559,7 +593,7 @@ body {
 
 @media screen and (min-width: 1024px) {
   .table .card {
-    margin: 3rem 15rem;
+    margin: 3rem auto;
   }
 
   .table {

@@ -376,170 +376,244 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   return (
     <div className="card table__row-action">
       <h3 className="card__header">Pending Sale</h3>
-      <p className="card__text">
-        {isSeller
-          ? "Buyer: " + sale.buyerAddress
-          : "Seller Address: " + sale.sellerAddress}
-        <br />
-        Platform: {sale.presalePlatform}
-        <br />
-        Price: {(sale.price * 10 ** -18).toFixed(4)} BNB
-        <br />
-        Presale: {sale.presaleAddress}
-        <br />
-        Presale Start: {new Date(sale.presaleStartTime * 1000).toUTCString()}
-        <br />
-        Presale End: {new Date(sale.presaleEndTime * 1000).toUTCString()}
-      </p>
-      {sale.cancelled ? (
-        <span className="cross">Cancelled!</span>
-      ) : isSeller ? (
-        sale.buyerAcceptedSaleAndSentBnbToContract ? (
-          sale.moneySentToSellerByContract ? (
-            <span className="tick">Success!</span>
+      <div className="card__text">
+        {isSeller ? (
+          <div className="card__pair">
+            <span>Buyer</span>
+            <span className="card__address">{sale.buyerAddress}</span>{" "}
+          </div>
+        ) : (
+          <div className="card__pair">
+            <span>Seller</span>
+            <span
+              style={{
+                wordBreak: "break-all",
+              }}
+            >
+              {sale.sellerAddress}
+            </span>{" "}
+          </div>
+        )}
+
+        <div className="card__pair">
+          <span>Platform:</span>
+          <span> {sale.presalePlatform}</span>{" "}
+        </div>
+
+        <div className="card__pair">
+          <span>Price</span>
+          <span> {(sale.price * 10 ** -18).toFixed(4)} BNB</span>{" "}
+        </div>
+
+        <div className="card__pair">
+          <span>Presale:</span>
+          <span className="card__address"> {sale.presaleAddress}</span>{" "}
+        </div>
+
+        <div className="card__pair">
+          {" "}
+          <span>Presale Start</span>
+          <span>
+            {" "}
+            {new Date(sale.presaleStartTime * 1000).toUTCString()}
+          </span>{" "}
+        </div>
+
+        <div className="card__pair">
+          <span>Presale End</span>
+          <span>
+            {" "}
+            {new Date(sale.presaleEndTime * 1000).toUTCString()}
+          </span>{" "}
+        </div>
+
+        <div className="card__pair">
+          <span>Outcome</span>
+          {sale.cancelled ? (
+            <span className="cross">Cancelled</span>
+          ) : sale.moneySentToSellerByContract ? (
+            <span className="tick">Success</span>
+          ) : (
+            <span>Pending</span>
+          )}
+        </div>
+
+        {sale.cancelled ? (
+          <></>
+        ) : // <span className="cross">Cancelled!</span>
+        isSeller ? (
+          sale.buyerAcceptedSaleAndSentBnbToContract ? (
+            sale.moneySentToSellerByContract ? (
+              <></>
+            ) : (
+              // <span className="tick">Success!</span>
+              <>
+                <div className="card__pair">
+                  <span>Action</span>
+                  <div>
+                    <button
+                      className="btn btn--primary"
+                      onClick={() => {
+                        completeSale(
+                          sale.sellerAddress,
+                          sale.presaleAddress,
+                          sale.buyerAddress
+                        );
+                      }}
+                      disabled={isCompletingSale || isCompleteSaleConfigError}
+                      style={
+                        isCompletingSale || isCompleteSaleConfigError
+                          ? {
+                              marginRight: "10px",
+                              cursor: "not-allowed",
+                              opacity: "0.5",
+                            }
+                          : { marginRight: "10px" }
+                      }
+                    >
+                      {isCompletingSale ? "Completing..." : "Complete"}
+                    </button>
+                    <button
+                      className="btn btn--primary"
+                      onClick={() => {
+                        cancelSale(
+                          sale.sellerAddress,
+                          sale.presaleAddress,
+                          sale.buyerAddress,
+                          sale.buyerAcceptedTimestamp
+                        );
+                      }}
+                      disabled={cancelTxLoading || isCancelSaleConfigError}
+                      style={
+                        cancelTxLoading || isCancelSaleConfigError
+                          ? { cursor: "not-allowed", opacity: "0.5" }
+                          : {}
+                      }
+                    >
+                      {cancelTxLoading ? "Cancelling..." : "Cancel"}
+                    </button>
+                    {isCompleteSaleConfigError && (
+                      <span className="card__error">
+                        Wait until buyers wallet is added to presale
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </>
+            )
           ) : (
             <>
-              <button
-                className="btn btn--primary"
-                onClick={() => {
-                  completeSale(
-                    sale.sellerAddress,
-                    sale.presaleAddress,
-                    sale.buyerAddress
-                  );
-                }}
-                disabled={isCompletingSale || isCompleteSaleConfigError}
-                style={
-                  isCompletingSale || isCompleteSaleConfigError
-                    ? {
-                        marginRight: "10px",
-                        cursor: "not-allowed",
-                        opacity: "0.5",
-                      }
-                    : { marginRight: "10px" }
-                }
-              >
-                {isCompletingSale ? "Completing..." : "Complete"}
-              </button>
-              <button
-                className="btn btn--primary"
-                onClick={() => {
-                  cancelSale(
-                    sale.sellerAddress,
-                    sale.presaleAddress,
-                    sale.buyerAddress,
-                    sale.buyerAcceptedTimestamp
-                  );
-                }}
-                disabled={cancelTxLoading || isCancelSaleConfigError}
-                style={
-                  cancelTxLoading || isCancelSaleConfigError
-                    ? { cursor: "not-allowed", opacity: "0.5" }
-                    : {}
-                }
-              >
-                {cancelTxLoading ? "Cancelling..." : "Cancel"}
-              </button>
-              <br />
-              {isCompleteSaleConfigError && (
-                <span className="card__error">
-                  Wait until buyers wallet is added to presale
-                </span>
-              )}
+              <div className="card__pair">
+                <span>Action</span>
+                <div>
+                  <button
+                    className="btn btn--primary"
+                    onClick={() => {
+                      cancelSale(
+                        sale.sellerAddress,
+                        sale.presaleAddress,
+                        sale.buyerAddress,
+                        sale.buyerAcceptedTimestamp
+                      );
+                    }}
+                    disabled={cancelTxLoading || isCancelSaleConfigError}
+                    style={
+                      cancelTxLoading || isCancelSaleConfigError
+                        ? { cursor: "not-allowed", opacity: "0.5" }
+                        : {}
+                    }
+                  >
+                    {cancelTxLoading ? "Cancelling..." : "Cancel"}
+                  </button>
+                  {isCancelSaleConfigError &&
+                    (cancelSaleConfigError?.error?.data?.message.includes(
+                      "wallet has already been added"
+                    ) ? (
+                      <span className="card__error">
+                        Your wallet has already been added!
+                      </span>
+                    ) : (
+                      <span className="card__error">
+                        Wait until presale starts
+                      </span>
+                    ))}
+                </div>
+              </div>
+            </>
+          )
+        ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
+          sale.moneySentToSellerByContract ? (
+            <></>
+          ) : (
+            // <span className="tick">Success!</span>
+            <>
+              <div className="card__pair">
+                <span>Action</span>
+                <button
+                  className="btn btn--primary"
+                  onClick={() => {
+                    cancelSale(
+                      sale.sellerAddress,
+                      sale.presaleAddress,
+                      sale.buyerAddress,
+                      sale.buyerAcceptedTimestamp
+                    );
+                  }}
+                  disabled={cancelTxLoading || isCancelSaleConfigError}
+                  style={
+                    cancelTxLoading || isCancelSaleConfigError
+                      ? { cursor: "not-allowed", opacity: "0.5" }
+                      : {}
+                  }
+                >
+                  {cancelTxLoading ? "Cancelling..." : "Cancel"}
+                </button>
+                {cancelSaleConfigError &&
+                  (cancelSaleConfigError?.error?.data?.message.includes(
+                    "wallet has already been added"
+                  ) ? (
+                    <span className="card__error">
+                      Your wallet has already been added!
+                    </span>
+                  ) : (
+                    <span className="card__error">
+                      Wait until presale starts!!!
+                    </span>
+                  ))}
+                {!isCancelSaleConfigError && (
+                  <span className="card__error">
+                    You can cancel within 5 minutes
+                  </span>
+                )}
+              </div>
             </>
           )
         ) : (
           <>
-            <button
-              className="btn btn--primary"
-              onClick={() => {
-                cancelSale(
-                  sale.sellerAddress,
-                  sale.presaleAddress,
-                  sale.buyerAddress,
-                  sale.buyerAcceptedTimestamp
-                );
-              }}
-              disabled={cancelTxLoading || isCancelSaleConfigError}
-              style={
-                cancelTxLoading || isCancelSaleConfigError
-                  ? { cursor: "not-allowed", opacity: "0.5" }
-                  : {}
-              }
-            >
-              {cancelTxLoading ? "Cancelling..." : "Cancel"}
-            </button>
-            <br />
-            {isCancelSaleConfigError &&
-              (cancelSaleConfigError?.error?.data?.message.includes(
-                "wallet has already been added"
-              ) ? (
-                <span className="card__error">
-                  Your wallet has already been added!
-                </span>
-              ) : (
-                <span className="card__error">Wait until presale starts</span>
-              ))}
+            <div className="card__pair">
+              <span>Action</span>
+              <button
+                className="btn btn--primary"
+                onClick={() => {
+                  acceptSale(
+                    sale.sellerAddress,
+                    sale.presaleAddress,
+                    sale.price
+                  );
+                }}
+                disabled={isAcceptSaleLoading}
+                style={
+                  isAcceptSaleLoading
+                    ? { cursor: "not-allowed", opacity: "0.5" }
+                    : {}
+                }
+              >
+                {isAcceptSaleLoading ? "Accepting..." : "Accept Sale"}
+              </button>
+            </div>
           </>
-        )
-      ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
-        sale.moneySentToSellerByContract ? (
-          <span className="tick">Success!</span>
-        ) : (
-          <>
-            <button
-              className="btn btn--primary"
-              onClick={() => {
-                cancelSale(
-                  sale.sellerAddress,
-                  sale.presaleAddress,
-                  sale.buyerAddress,
-                  sale.buyerAcceptedTimestamp
-                );
-              }}
-              disabled={cancelTxLoading || isCancelSaleConfigError}
-              style={
-                cancelTxLoading || isCancelSaleConfigError
-                  ? { cursor: "not-allowed", opacity: "0.5" }
-                  : {}
-              }
-            >
-              {cancelTxLoading ? "Cancelling..." : "Cancel"}
-            </button>
-            <br />
-            {cancelSaleConfigError &&
-              (cancelSaleConfigError?.error?.data?.message.includes(
-                "wallet has already been added"
-              ) ? (
-                <span className="card__error">
-                  Your wallet has already been added!
-                </span>
-              ) : (
-                <span className="card__error">
-                  Wait until presale starts!!!
-                </span>
-              ))}
-            {!isCancelSaleConfigError && (
-              <span className="card__error">
-                You can cancel within 5 minutes
-              </span>
-            )}
-          </>
-        )
-      ) : (
-        <button
-          className="btn btn--primary"
-          onClick={() => {
-            acceptSale(sale.sellerAddress, sale.presaleAddress, sale.price);
-          }}
-          disabled={isAcceptSaleLoading}
-          style={
-            isAcceptSaleLoading ? { cursor: "not-allowed", opacity: "0.5" } : {}
-          }
-        >
-          {isAcceptSaleLoading ? "Accepting..." : "Accept Sale"}
-        </button>
-      )}
+        )}
+      </div>
     </div>
   );
 };
