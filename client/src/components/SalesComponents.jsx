@@ -252,6 +252,8 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
       timeOut = setInterval(() => {
         refetchCancelSaleConfig();
       }, 10000);
+    } else {
+      clearInterval(timeOut);
     }
     return () => {
       clearInterval(timeOut);
