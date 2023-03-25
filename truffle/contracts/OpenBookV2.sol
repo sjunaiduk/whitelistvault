@@ -348,8 +348,6 @@ contract OpenBookV2 {
             "You must send the exact amount of ETHER"
         );
 
-        payable(address(this)).transfer(msg.value);
-
         // if buyer accepted open book sale, set buyer address to msg.sender
         if (saleInfo.buyerAddress == address(0)) {
             saleInfo.buyerAddress = msg.sender;
