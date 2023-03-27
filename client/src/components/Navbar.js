@@ -48,6 +48,14 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
             </li>
           ) : null}
 
+          {!isUserSeller ? (
+            <li className="navbar-new__item">
+              <Link to="/openBookSales" className="navbar__link">
+                OpenBook Sales
+              </Link>
+            </li>
+          ) : null}
+
           <li className="navbar-new__item">
             <Link to="/sales" className="navbar__link">
               Sales

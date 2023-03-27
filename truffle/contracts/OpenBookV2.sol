@@ -483,6 +483,22 @@ contract OpenBookV2 {
         sellerStats[sellersAddress].totalSalesCancelled++;
         sellerStats[sellersAddress].totalSalesPending--;
         sales[sellersAddress][saleIndex] = saleInfo;
+
+        totalOpenBookSales--;
+        totalPendingSalesForSeller[saleInfo.sellerAddress]--;
+        // remove seller from sellersWithOpenBookSales if he has no more open book sales
+        if (totalPendingSalesForSeller[saleInfo.sellerAddress] == 0) {
+            for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
+                if (sellersWithOpenBookSales[i] == saleInfo.sellerAddress) {
+                    uint256 lastIndex = sellersWithOpenBookSales.length - 1;
+                    sellersWithOpenBookSales[i] = sellersWithOpenBookSales[
+                        lastIndex
+                    ];
+
+                    sellersWithOpenBookSales.pop();
+                }
+            }
+        }
     }
 
     function completeSale(

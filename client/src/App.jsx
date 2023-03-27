@@ -2,7 +2,11 @@ import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useAccount } from "wagmi";
 import { NavBar } from "./components/Navbar";
-import { CreateSale, ViewSales } from "./components/SalesComponents";
+import {
+  CreateSale,
+  ViewOpenBookSales,
+  ViewSales,
+} from "./components/SalesComponents";
 import { useEth } from "./contexts/EthContext";
 
 import "./style/normalize.css";
@@ -37,6 +41,18 @@ function App() {
                 path="/sales"
                 element={<ViewSales usersAddress={address} isSeller={seller} />}
               />
+              {!seller && (
+                <Route
+                  path="/openBookSales"
+                  element={
+                    <ViewOpenBookSales
+                      usersAddress={address}
+                      isSeller={seller}
+                    />
+                  }
+                />
+              )}
+
               {seller && (
                 <Route
                   path="/createSale"

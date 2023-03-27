@@ -28,7 +28,6 @@ struct SaleInfo {
  */
 
 export const ViewSales = ({ usersAddress, isSeller = true }) => {
-  const { state } = useEth();
   const { chain } = useNetwork();
   const {
     data: sales,
@@ -45,30 +44,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
     },
   });
 
-  //const [sales, setSales] = useState(null);
-
   const { address } = useAccount();
-
-  // const fetchAndSetSales = async () => {
-  //   console.log(`Fetching sales for ${usersAddress}. Is seller? ${isSeller}`);
-  //   let saleData;
-  //   switch (isSeller) {
-  //     case true:
-  //       saleData = await state.contract.methods
-  //         .getSalesForSeller(usersAddress)
-  //         .call();
-  //       console.log(`Got sales for ${usersAddress}:`, saleData);
-  //       break;
-  //     case false:
-  //       saleData = await state.contract.methods
-  //         .getSalesForBuyer(usersAddress)
-  //         .call();
-  //       break;
-  //   }
-
-  //   console.log(`Got sales for ${usersAddress}:`, saleData);
-  //   setSales(saleData);
-  // };
 
   function updateSpecificSaleByIndex(index, outcome) {
     setSales((prevSales) => {
@@ -86,17 +62,149 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
     });
   }
 
-  //const [refs, setRefs] = useState([]);
-
   const [expandedSaleIndex, setExpandedSaleIndex] = useState(null);
 
-  // useEffect(() => {
-  //   setSales(null);
-  // }, [state]);
+  const handleRowClick = (index) => {
+    if (index === expandedSaleIndex) {
+      setExpandedSaleIndex(null);
+      return;
+    } else {
+      setExpandedSaleIndex(index);
+    }
+  };
+  return (
+    <div>
+      <div className="table" id="dim">
+        <ul className="table__header">
+          <li className="table__header-item optional">Address</li>
+          <li className="table__header-item optional">Platform</li>
+          <li className="table__header-item">Price</li>
+          <li className="table__header-item">Status</li>
+          <li className="table__header-item optional">Action</li>
+        </ul>
 
-  // useEffect(() => {
-  //   fetchAndSetSales();
-  // }, [isSeller]);
+        {address ? (
+          <>
+            <div className="table__body">
+              {sales ? (
+                sales.map((sale, index) => (
+                  <ul
+                    className={
+                      index === expandedSaleIndex
+                        ? " table__row row-action--expanded"
+                        : "table__row action-hidden "
+                    }
+                    key={index}
+                  >
+                    <div
+                      className="table__row-details"
+                      key={sale}
+                      onClick={() => handleRowClick(index)}
+                    >
+                      <li className="table__body-item table-address optional">
+                        {sale.buyerAddress}
+                      </li>
+                      <li className="table__body-item optional">
+                        {sale.presalePlatform}
+                      </li>
+                      <li className="table__body-item">
+                        {(sale.price * 10 ** -18).toFixed(2)} BNB
+                      </li>
+                      {!sale.cancelled ? (
+                        sale.buyerAcceptedSaleAndSentBnbToContract ? (
+                          sale.moneySentToSellerByContract ? (
+                            <li className="table__body-item action tick">
+                              Success
+                            </li>
+                          ) : (
+                            <li className="table__body-item action ">
+                              Waiting For Seller
+                            </li>
+                          )
+                        ) : (
+                          <li className="table__body-item action ">
+                            Waiting For Buyer
+                          </li>
+                        )
+                      ) : (
+                        <li className="table__body-item action cross">
+                          Cancelled
+                        </li>
+                      )}
+
+                      <li className="show-row-action">
+                        <i className="burger"> </i>
+                      </li>
+                    </div>
+                    <SalesCard
+                      // refetchSales={fetchAndSetSales}
+                      sale={sale}
+                      isSeller={isSeller}
+                      setRowSuccess={() => {
+                        updateSpecificSaleByIndex(index, "success");
+                      }}
+                      setRowCancelled={() => {
+                        updateSpecificSaleByIndex(index, "cancelled");
+                      }}
+                      refetchSales={refetch}
+                    />
+                  </ul>
+                ))
+              ) : (
+                <h3
+                  style={{
+                    textAlign: "center",
+                  }}
+                >
+                  No sales yet.
+                </h3>
+              )}
+              {/* <button onClick={fetchAndSetSales}>Get Sales</button> */}
+            </div>
+          </>
+        ) : (
+          <h3>You are not connected.</h3>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
+  const { chain } = useNetwork();
+  const {
+    data: sales,
+    isError,
+    isLoading,
+    refetch,
+  } = useContractRead({
+    abi: escrowAbi.abi,
+    address: escrowAbi.networks[chain.id].address,
+    functionName: "getPendingOpenBookSales",
+    onSuccess: (data) => {
+      console.log("data", data);
+    },
+  });
+
+  const { address } = useAccount();
+
+  function updateSpecificSaleByIndex(index, outcome) {
+    setSales((prevSales) => {
+      return prevSales.map((sale, i) => {
+        if (i === index) {
+          if (outcome === "cancelled") {
+            return { ...sale, cancelled: true };
+          } else {
+            return { ...sale, moneySentToSellerByContract: true };
+          }
+        } else {
+          return sale;
+        }
+      });
+    });
+  }
+
+  const [expandedSaleIndex, setExpandedSaleIndex] = useState(null);
 
   const handleRowClick = (index) => {
     if (index === expandedSaleIndex) {
@@ -380,7 +488,11 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
         {isSeller ? (
           <div className="card__pair">
             <span>Buyer</span>
-            <span className="card__address">{sale.buyerAddress}</span>{" "}
+            <span className="card__address">
+              {sale.buyerAddress !== ethers.constants.AddressZero
+                ? sale.buyerAddress
+                : "No buyer yet"}
+            </span>{" "}
           </div>
         ) : (
           <div className="card__pair">
@@ -648,13 +760,12 @@ export const CreateSale = () => {
           ethers.constants.AddressZero,
           price > 0 ? ethers.utils.parseEther(price).toString() : 0,
         ],
-    enabled: !isOpenBook
-      ? !isInvalidAddress(presaleAddress) &&
-        !isInvalidAddress(walletToAdd) &&
-        !!price
-      : !isInvalidAddress(presaleAddress) && !!price,
-    onSettled: () => {
-      console.log("Create sale settled");
+
+    onSuccess: () => {
+      console.log("Create sale success");
+    },
+    onSettled: (data) => {
+      console.log("Create sale settled ", data);
     },
   });
 
@@ -766,12 +877,12 @@ export const CreateSale = () => {
             </div>
             <button
               disabled={
-                isInvalidAddress(walletToAdd) ||
+                (!isOpenBook && isInvalidAddress(walletToAdd)) ||
                 isInvalidAddress(presaleAddress) ||
                 createSalePrepareTxFailed
               }
               style={
-                isInvalidAddress(walletToAdd) ||
+                (!isOpenBook && isInvalidAddress(walletToAdd)) ||
                 isInvalidAddress(presaleAddress) ||
                 createSalePrepareTxFailed ||
                 createSaleTransactionLoading
