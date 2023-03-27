@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useAccount } from "wagmi";
+import { Home } from "./components/Home";
 import { NavBar } from "./components/Navbar";
 import {
   CreateSale,
@@ -29,13 +30,6 @@ function App() {
       <>
         {address ? (
           <>
-            <i
-              style={{
-                wordBreak: "break-all",
-              }}
-            >
-              Connected to {address}
-            </i>
             <Routes>
               <Route
                 path="/sales"
@@ -60,7 +54,7 @@ function App() {
                 />
               )}
 
-              <Route path="/" element={<h1>Home</h1>} />
+              <Route path="/" element={<Home isUserSeller={seller} />} />
             </Routes>
           </>
         ) : (

@@ -27,7 +27,7 @@ html {
 }
 
 body {
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   min-height: 100vh;
   padding-top: 80px;
 }
@@ -350,7 +350,7 @@ body {
   }
 
   .navbar-new__items li {
-    margin: 0 1.5rem;
+    margin: 0 0.5rem;
   }
 }
 
@@ -713,4 +713,22 @@ input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* Titles / Dashboard */
+
+.title {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 5rem;
+}
+
+.main-title {
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.main-container {
+  margin: 0 5%;
 }

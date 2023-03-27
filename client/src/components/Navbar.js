@@ -51,15 +51,21 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
           {!isUserSeller ? (
             <li className="navbar-new__item">
               <Link to="/openBookSales" className="navbar__link">
-                OpenBook Sales
+                Openbook sales
               </Link>
             </li>
           ) : null}
 
           <li className="navbar-new__item">
-            <Link to="/sales" className="navbar__link">
-              Sales
-            </Link>
+            {!isUserSeller ? (
+              <Link to="/sales" className="navbar__link">
+                Buyer Sales
+              </Link>
+            ) : (
+              <Link to="/sales" className="navbar__link">
+                Seller Sales
+              </Link>
+            )}
           </li>
           <li className="navbar-new__item mobile-hidden">
             <ConnectWallet />
