@@ -624,6 +624,7 @@ export const CreateSale = () => {
 
   const { chain } = useNetwork();
 
+  const [isOpenBook, setIsOpenBook] = useState(false);
   const [presaleAddress, setPresaleAddress] = useState("");
   const [walletToAdd, setWalletToAdd] = useState("");
   const [price, setPrice] = useState(0);
@@ -636,15 +637,22 @@ export const CreateSale = () => {
     address: escrowAbi.networks[chain.id].address,
     functionName: "createSale",
     abi: escrowAbi.abi,
-    args: [
-      presaleAddress,
-      walletToAdd,
-      price > 0 ? ethers.utils.parseEther(price).toString() : 0,
-    ],
-    enabled:
-      !isInvalidAddress(presaleAddress) &&
-      !isInvalidAddress(walletToAdd) &&
-      !!price,
+    args: !isOpenBook
+      ? [
+          presaleAddress,
+          walletToAdd,
+          price > 0 ? ethers.utils.parseEther(price).toString() : 0,
+        ]
+      : [
+          presaleAddress,
+          ethers.constants.AddressZero,
+          price > 0 ? ethers.utils.parseEther(price).toString() : 0,
+        ],
+    enabled: !isOpenBook
+      ? !isInvalidAddress(presaleAddress) &&
+        !isInvalidAddress(walletToAdd) &&
+        !!price
+      : !isInvalidAddress(presaleAddress) && !!price,
     onSettled: () => {
       console.log("Create sale settled");
     },
@@ -675,27 +683,54 @@ export const CreateSale = () => {
               e.preventDefault();
             }}
           >
-            <div className="form-group__control">
+            <div
+              style={{
+                display: "flex",
+              }}
+              className="form-group__control"
+            >
               <label
-                className={
-                  isInvalidAddress(walletToAdd)
-                    ? "form-group__label cross"
-                    : "form-group__label tick"
-                }
-                htmlFor="walletToAdd"
+                style={{
+                  marginRight: "1rem",
+                }}
+                className="form-group__label"
+                htmlFor="OpenBookSaleCheck"
               >
-                Wallet To Add
+                Open Book Sale
               </label>
               <input
                 required
-                type="text"
-                placeholder="Wallet to Add (buyer)"
-                value={walletToAdd}
-                onChange={(e) => setWalletToAdd(e.target.value)}
+                type="checkbox"
                 className="form-group__input"
-                id="walletToAdd"
+                id="OpenBookSaleCheck"
+                checked={isOpenBook}
+                onChange={(e) => setIsOpenBook(e.target.checked)}
               />
             </div>
+            {!isOpenBook && (
+              <div className="form-group__control">
+                <label
+                  className={
+                    isInvalidAddress(walletToAdd)
+                      ? "form-group__label cross"
+                      : "form-group__label tick"
+                  }
+                  htmlFor="walletToAdd"
+                >
+                  Wallet To Add
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Wallet to Add (buyer)"
+                  value={walletToAdd}
+                  onChange={(e) => setWalletToAdd(e.target.value)}
+                  className="form-group__input"
+                  id="walletToAdd"
+                />
+              </div>
+            )}
+
             <div className="form-group__control">
               <label
                 className={
