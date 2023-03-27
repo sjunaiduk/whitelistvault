@@ -76,9 +76,9 @@ contract OpenBookV2 {
     mapping(address => SaleInfo[]) sales;
     mapping(address => SellerStats) public sellerStats;
     mapping(address => BuyerStats) public buyerStats;
-    uint256 totalOpenBookSales = 0;
-    address[] sellersWithOpenBookSales;
-    mapping(address => uint256) totalPendingSalesForSeller;
+    uint256 public totalOpenBookSales = 0;
+    address[] public sellersWithOpenBookSales;
+    mapping(address => uint256) public totalPendingOpenBookSalesForSeller;
 
     address public owner;
     address public feeAddress;
@@ -172,6 +172,8 @@ contract OpenBookV2 {
         SaleInfo memory saleInfo;
         PoolSettings memory poolSettings = getPoolSettings(presale);
 
+        require(price > 0.001 ether, "Price must be greater than 0.001 BNB");
+
         if (block.timestamp > poolSettings.startTime) {
             revert("Presale has already started");
         }
@@ -194,7 +196,7 @@ contract OpenBookV2 {
             });
 
             totalOpenBookSales++;
-            totalPendingSalesForSeller[msg.sender]++;
+            totalPendingOpenBookSalesForSeller[msg.sender]++;
             // check if seller already has an open book sale
             bool sellerHasOpenBookSale = false;
             for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
@@ -357,9 +359,9 @@ contract OpenBookV2 {
                 .salesToABuyerForAPresale[msg.sender]++;
 
             totalOpenBookSales--;
-            totalPendingSalesForSeller[seller]--;
+            totalPendingOpenBookSalesForSeller[seller]--;
             // remove seller from sellersWithOpenBookSales if he has no more open book sales
-            if (totalPendingSalesForSeller[seller] == 0) {
+            if (totalPendingOpenBookSalesForSeller[seller] == 0) {
                 for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
                     if (sellersWithOpenBookSales[i] == seller) {
                         uint256 lastIndex = sellersWithOpenBookSales.length - 1;
@@ -370,6 +372,33 @@ contract OpenBookV2 {
                         sellersWithOpenBookSales.pop();
                     }
                 }
+            }
+
+            bool hasBuyerDealtWithSeller = false;
+
+            for (
+                uint256 i = 0;
+                i <
+                buyerStats[saleInfo.buyerAddress]
+                    .sellersBuyerHasDealtWith
+                    .length;
+                i++
+            ) {
+                if (
+                    buyerStats[saleInfo.buyerAddress].sellersBuyerHasDealtWith[
+                        i
+                    ] == seller
+                ) {
+                    hasBuyerDealtWithSeller = true;
+                    // save gas and break, if we dont then we will have to loop through all the sales
+                    break;
+                }
+            }
+
+            if (hasBuyerDealtWithSeller == false) {
+                buyerStats[saleInfo.buyerAddress].sellersBuyerHasDealtWith.push(
+                    seller
+                );
             }
         }
         saleInfo.buyerAcceptedSaleAndSentBnbToContract = true;
@@ -484,10 +513,16 @@ contract OpenBookV2 {
         sellerStats[sellersAddress].totalSalesPending--;
         sales[sellersAddress][saleIndex] = saleInfo;
 
-        totalOpenBookSales--;
-        totalPendingSalesForSeller[saleInfo.sellerAddress]--;
-        // remove seller from sellersWithOpenBookSales if he has no more open book sales
-        if (totalPendingSalesForSeller[saleInfo.sellerAddress] == 0) {
+        if (totalOpenBookSales > 0) {
+            totalOpenBookSales--;
+        }
+
+        if (totalPendingOpenBookSalesForSeller[saleInfo.sellerAddress] > 0) {
+            totalPendingOpenBookSalesForSeller[saleInfo.sellerAddress]--;
+        }
+
+        // remove seller from sellersWithOpenBookSales if he has any. We assume he does since he has some openBookSales.
+        if (totalPendingOpenBookSalesForSeller[saleInfo.sellerAddress] == 0) {
             for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
                 if (sellersWithOpenBookSales[i] == saleInfo.sellerAddress) {
                     uint256 lastIndex = sellersWithOpenBookSales.length - 1;

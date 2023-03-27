@@ -760,6 +760,7 @@ export const CreateSale = () => {
           ethers.constants.AddressZero,
           price > 0 ? ethers.utils.parseEther(price).toString() : 0,
         ],
+    enabled: false,
 
     onSuccess: () => {
       console.log("Create sale success");
@@ -768,6 +769,22 @@ export const CreateSale = () => {
       console.log("Create sale settled ", data);
     },
   });
+
+  useEffect(() => {
+    if (isOpenBook) {
+      if (!isInvalidAddress(presaleAddress)) {
+        refetch();
+      } else {
+        console.log("Create sale form is invalid");
+      }
+    } else {
+      if (!isInvalidAddress(presaleAddress) && !isInvalidAddress(walletToAdd)) {
+        refetch();
+      } else {
+        console.log("Create sale form is invalid");
+      }
+    }
+  }, [presaleAddress, walletToAdd, price, isOpenBook]);
 
   const { write: createSaleAsync, data: createSaleResult } =
     useContractWrite(createSaleConfig);
@@ -810,7 +827,6 @@ export const CreateSale = () => {
                 Open Book Sale
               </label>
               <input
-                required
                 type="checkbox"
                 className="form-group__input"
                 id="OpenBookSaleCheck"
@@ -869,7 +885,9 @@ export const CreateSale = () => {
               <input
                 id="price"
                 required
-                type="decimal"
+                min={0}
+                step="any"
+                type="number"
                 placeholder="Price"
                 className="form-group__input"
                 onChange={(e) => setPrice(e.target.value)}
