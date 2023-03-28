@@ -579,6 +579,12 @@ contract OpenBookV2 {
             "Money has already been sent to the seller"
         );
 
+        // presale must have started.
+        require(
+            saleInfo.presaleStartTime <= block.timestamp,
+            "Presale has not started yet"
+        );
+
         bool buyerWalletAdded = isUserWhitelistedCustom(
             saleInfo.presaleAddress,
             saleInfo.buyerAddress
