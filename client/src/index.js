@@ -6,12 +6,25 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
 import { EthProvider } from "./contexts/EthContext";
+import { WagmiConfig, createClient } from "wagmi";
+import { ConnectKitProvider, getDefaultClient } from "connectkit";
+import { bscTestnet } from "wagmi/chains";
+
+const client = createClient(
+  getDefaultClient({
+    chains: [bscTestnet],
+  })
+);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <BrowserRouter>
-    <EthProvider>
-      <App />
-    </EthProvider>
+    <WagmiConfig client={client}>
+      <ConnectKitProvider>
+        <EthProvider>
+          <App />
+        </EthProvider>
+      </ConnectKitProvider>
+    </WagmiConfig>
   </BrowserRouter>
 );

@@ -1,8 +1,17 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
 import { useEth } from "../contexts/EthContext";
-import { completeSaleRequest, completeCancelRequest } from "../apiInteractor";
+import {
+  useAccount,
+  usePrepareContractWrite,
+  useContractWrite,
+  useNetwork,
+  useContractRead,
+  useWaitForTransaction,
+} from "wagmi";
 
+import { ethers } from "ethers";
+import escrowAbi from "../contracts/OpenBookV2.json";
 /*
 struct SaleInfo {
     uint256 creationTimestamp;
@@ -19,30 +28,23 @@ struct SaleInfo {
  */
 
 export const ViewSales = ({ usersAddress, isSeller = true }) => {
-  const { state } = useEth();
+  const { chain } = useNetwork();
+  const {
+    data: sales,
+    isError,
+    isLoading,
+    refetch,
+  } = useContractRead({
+    abi: escrowAbi.abi,
+    address: escrowAbi.networks[chain.id].address,
+    functionName: isSeller ? "getSalesForSeller" : "getSalesForBuyer",
+    args: [usersAddress],
+    onSuccess: (data) => {
+      console.log("data", data);
+    },
+  });
 
-  const [sales, setSales] = useState(null);
-
-  const fetchAndSetSales = async () => {
-    console.log(`Fetching sales for ${usersAddress}. Is seller? ${isSeller}`);
-    let saleData;
-    switch (isSeller) {
-      case true:
-        saleData = await state.contract.methods
-          .getSalesForSeller(usersAddress)
-          .call();
-        console.log(`Got sales for ${usersAddress}:`, saleData);
-        break;
-      case false:
-        saleData = await state.contract.methods
-          .getSalesForBuyer(usersAddress)
-          .call();
-        break;
-    }
-
-    console.log(`Got sales for ${usersAddress}:`, saleData);
-    setSales(saleData);
-  };
+  const { address } = useAccount();
 
   function updateSpecificSaleByIndex(index, outcome) {
     setSales((prevSales) => {
@@ -60,17 +62,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
     });
   }
 
-  //const [refs, setRefs] = useState([]);
-
   const [expandedSaleIndex, setExpandedSaleIndex] = useState(null);
-
-  useEffect(() => {
-    setSales(null);
-  }, [state]);
-
-  useEffect(() => {
-    fetchAndSetSales();
-  }, [isSeller]);
 
   const handleRowClick = (index) => {
     if (index === expandedSaleIndex) {
@@ -91,7 +83,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
           <li className="table__header-item optional">Action</li>
         </ul>
 
-        {state.accounts?.length ? (
+        {address ? (
           <>
             <div className="table__body">
               {sales ? (
@@ -145,7 +137,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
                       </li>
                     </div>
                     <SalesCard
-                      refetchSales={fetchAndSetSales}
+                      // refetchSales={fetchAndSetSales}
                       sale={sale}
                       isSeller={isSeller}
                       setRowSuccess={() => {
@@ -154,6 +146,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
                       setRowCancelled={() => {
                         updateSpecificSaleByIndex(index, "cancelled");
                       }}
+                      refetchSales={refetch}
                     />
                   </ul>
                 ))
@@ -166,7 +159,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
                   No sales yet.
                 </h3>
               )}
-              <button onClick={fetchAndSetSales}>Get Sales</button>
+              {/* <button onClick={fetchAndSetSales}>Get Sales</button> */}
             </div>
           </>
         ) : (
@@ -177,22 +170,300 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
   );
 };
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
+  const { chain } = useNetwork();
+  const {
+    data: sales,
+    isError,
+    isLoading,
+    refetch,
+  } = useContractRead({
+    abi: escrowAbi.abi,
+    address: escrowAbi.networks[chain.id].address,
+    functionName: "getPendingOpenBookSales",
+    onSuccess: (data) => {
+      console.log("data", data);
+    },
+  });
 
-const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
-  const { state } = useEth();
-  const acceptSale = async (sellersAddress, presaleAddress, price) => {
-    console.log(
-      `Accepting sale for ${sellersAddress} and presale ${presaleAddress}...`
-    );
-    console.log(`Accounts: ${state.accounts}`);
-    const priceInWei = sale.price;
-    console.log(`Price in wei: ${priceInWei}`);
-    await state.contract.methods
-      .acceptSaleAsBuyer(sellersAddress, presaleAddress, price)
-      .send({ from: state.accounts[0], value: priceInWei });
-    refetchSales();
+  const { address } = useAccount();
+
+  function updateSpecificSaleByIndex(index, outcome) {
+    setSales((prevSales) => {
+      return prevSales.map((sale, i) => {
+        if (i === index) {
+          if (outcome === "cancelled") {
+            return { ...sale, cancelled: true };
+          } else {
+            return { ...sale, moneySentToSellerByContract: true };
+          }
+        } else {
+          return sale;
+        }
+      });
+    });
+  }
+
+  const [expandedSaleIndex, setExpandedSaleIndex] = useState(null);
+
+  const handleRowClick = (index) => {
+    if (index === expandedSaleIndex) {
+      setExpandedSaleIndex(null);
+      return;
+    } else {
+      setExpandedSaleIndex(index);
+    }
   };
+  return (
+    <div>
+      <div className="table" id="dim">
+        <ul className="table__header">
+          <li className="table__header-item optional">Address</li>
+          <li className="table__header-item optional">Platform</li>
+          <li className="table__header-item">Price</li>
+          <li className="table__header-item">Status</li>
+          <li className="table__header-item optional">Action</li>
+        </ul>
+
+        {address ? (
+          <>
+            <div className="table__body">
+              {sales?.length ? (
+                sales.map((sale, index) => (
+                  <ul
+                    className={
+                      index === expandedSaleIndex
+                        ? " table__row row-action--expanded"
+                        : "table__row action-hidden "
+                    }
+                    key={index}
+                  >
+                    <div
+                      className="table__row-details"
+                      key={sale}
+                      onClick={() => handleRowClick(index)}
+                    >
+                      <li className="table__body-item table-address optional">
+                        {sale.buyerAddress}
+                      </li>
+                      <li className="table__body-item optional">
+                        {sale.presalePlatform}
+                      </li>
+                      <li className="table__body-item">
+                        {(sale.price * 10 ** -18).toFixed(2)} BNB
+                      </li>
+                      {!sale.cancelled ? (
+                        sale.buyerAcceptedSaleAndSentBnbToContract ? (
+                          sale.moneySentToSellerByContract ? (
+                            <li className="table__body-item action tick">
+                              Success
+                            </li>
+                          ) : (
+                            <li className="table__body-item action ">
+                              Waiting For Seller
+                            </li>
+                          )
+                        ) : (
+                          <li className="table__body-item action ">
+                            Waiting For Buyer
+                          </li>
+                        )
+                      ) : (
+                        <li className="table__body-item action cross">
+                          Cancelled
+                        </li>
+                      )}
+
+                      <li className="show-row-action">
+                        <i className="burger"> </i>
+                      </li>
+                    </div>
+                    <SalesCard
+                      // refetchSales={fetchAndSetSales}
+                      sale={sale}
+                      isSeller={isSeller}
+                      setRowSuccess={() => {
+                        updateSpecificSaleByIndex(index, "success");
+                      }}
+                      setRowCancelled={() => {
+                        updateSpecificSaleByIndex(index, "cancelled");
+                      }}
+                      refetchSales={refetch}
+                    />
+                  </ul>
+                ))
+              ) : (
+                <h3
+                  style={{
+                    textAlign: "center",
+                  }}
+                >
+                  No open-book sales yet.
+                </h3>
+              )}
+              {/* <button onClick={fetchAndSetSales}>Get Sales</button> */}
+            </div>
+          </>
+        ) : (
+          <h3>You are not connected.</h3>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const isInvalidAddress = (address) => {
+  const invalid = !ethers.utils.isAddress(address);
+  return invalid;
+};
+const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
+  const { chain } = useNetwork();
+
+  const { config: acceptSaleConfig } = usePrepareContractWrite({
+    address: escrowAbi.networks[chain.id].address,
+    abi: escrowAbi.abi,
+    functionName: "acceptSaleAsBuyer",
+    args: [sale.sellerAddress, sale.presaleAddress, sale.price],
+    enabled:
+      !sale.buyerAcceptedSaleAndSentBnbToContract &&
+      !sale.cancelled &&
+      !isSeller,
+
+    overrides: {
+      value: sale.price,
+    },
+  });
+
+  const { writeAsync: acceptSaleAsync, data: acceptSaleTxData } =
+    useContractWrite(acceptSaleConfig);
+
+  const { isLoading: isAcceptSaleLoading, isSuccess: isAcceptSaleSuccess } =
+    useWaitForTransaction({
+      hash: acceptSaleTxData?.hash,
+      onSuccess: () => {
+        console.log(
+          "Accept sale success, refetching cancel sale config. this sale card: ",
+          sale
+        );
+        refetchCancelSaleConfig();
+        refetchSales();
+      },
+    });
+
+  useEffect(() => {
+    let timeOut;
+    if (
+      sale.buyerAcceptedSaleAndSentBnbToContract &&
+      !sale.cancelled &&
+      !sale.moneySentToSellerByContract
+    ) {
+      console.log(
+        "This sale has been accepted by buyer, and is not cancelled. Refetching cancel sale config every 10 seconds. sale: ",
+        sale
+      );
+      timeOut = setInterval(() => {
+        refetchCancelSaleConfig();
+      }, 10000);
+    } else {
+      clearInterval(timeOut);
+    }
+    return () => {
+      clearInterval(timeOut);
+    };
+  }, [sale]);
+
+  const {
+    config: completeSaleConfig,
+    refetch: refetchCompleteSaleConfig,
+    isError: isCompleteSaleConfigError,
+  } = usePrepareContractWrite({
+    address: escrowAbi.networks[chain.id].address,
+    abi: escrowAbi.abi,
+    functionName: "completeSale",
+    args: [sale.sellerAddress, sale.presaleAddress, sale.buyerAddress],
+    enabled:
+      sale.buyerAcceptedSaleAndSentBnbToContract &&
+      !sale.cancelled &&
+      !sale.moneySentToSellerByContract &&
+      isSeller,
+    onError: (error) => {
+      console.log("Complete sale error: ", error);
+    },
+  });
+
+  useEffect(() => {
+    let interval;
+    if (
+      isSeller &&
+      sale.buyerAcceptedSaleAndSentBnbToContract &&
+      !sale.cancelled &&
+      !sale.moneySentToSellerByContract
+    ) {
+      console.log("is seller, refetching complete sale config every 60s");
+      interval = setInterval(() => {
+        console.log("refetching complete sale config");
+        refetchCompleteSaleConfig();
+      }, 30000);
+    }
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isSeller, sale]);
+
+  const { writeAsync: completeSaleAsync, data: completeSaleTxData } =
+    useContractWrite(completeSaleConfig);
+
+  const { isLoading: isCompletingSale } = useWaitForTransaction({
+    hash: completeSaleTxData?.hash,
+    onSuccess: () => {
+      refetchSales();
+    },
+  });
+
+  const acceptSale = async () => {
+    await acceptSaleAsync();
+  };
+
+  const {
+    config: cancelSaleConfig,
+    isError: isCancelSaleConfigError,
+    error: cancelSaleConfigError,
+    refetch: refetchCancelSaleConfig,
+  } = usePrepareContractWrite({
+    address: escrowAbi.networks[chain.id].address,
+    abi: escrowAbi.abi,
+    functionName: "cancelSale",
+    args: [sale.presaleAddress, sale.buyerAddress, sale.sellerAddress],
+    enabled:
+      !sale.cancelled &&
+      !sale.moneySentToSellerByContract &&
+      (!isSeller ? sale.buyerAcceptedSaleAndSentBnbToContract : true),
+
+    onError: (error) => {
+      console.log(
+        "Cancel sale error: ",
+        error,
+        "sale: ",
+        sale,
+        "enabled: ",
+        !sale.cancelled &&
+          !sale.moneySentToSellerByContract &&
+          (!isSeller ? sale.buyerAcceptedSaleAndSentBnbToContract : true)
+      );
+    },
+  });
+
+  const { writeAsync: cancelSaleAsync, data: cancelSaleTxData } =
+    useContractWrite(cancelSaleConfig);
+
+  const { isLoading: cancelTxLoading, isSuccess: cancelTxSuccess } =
+    useWaitForTransaction({
+      hash: cancelSaleTxData?.hash,
+      onSuccess: () => {
+        refetchSales();
+      },
+    });
 
   const completeSale = async (sellerAddress, presaleAddress, walletToAdd) => {
     console.log(
@@ -200,205 +471,404 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
     );
 
     try {
-      await state.contract.methods
-        .completeSale(sellerAddress, presaleAddress, walletToAdd)
-        .send({ from: state.accounts[0] });
-      refetchSales();
+      await completeSaleAsync();
     } catch (e) {
       console.log(e);
     }
   };
 
-  const cancelSale = async (
-    sellerAddress,
-    presaleAddress,
-    walletToAdd,
-    timeSaleWasAccepted
-  ) => {
-    console.log(
-      `Cancellling sale for seller ${sellerAddress}, presale ${presaleAddress} and wallet ${walletToAdd}..., timeSaleWasAccepted: ${timeSaleWasAccepted}`
-    );
-
-    // check if timeSaleWasAccepted is less than 5 minutes ago
-    const timeNow = new Date().getTime();
-    const timeDiff = timeNow - timeSaleWasAccepted;
-    const timeDiffInMinutes = timeDiff / 1000 / 60;
-    console.log(`Time diff in minutes: ${timeDiffInMinutes}`);
-
-    // only applies to buyers as they cant cancel within 5 mintues of accepting
-    if (!isSeller) {
-      if (timeDiffInMinutes > 5) {
-        console.log(
-          `You can't cancel a sale after 5 minutes! (Doing api call to check if sale started and wallet hasn't been added yet - HARDOCDED TO CANCEL FOR TESTS))`
-        );
-      } else {
-        console.log("Time diff is less than 5 minutes, cancelling sale...");
-      }
-      await state.contract.methods
-        .cancelSale(presaleAddress, walletToAdd, sellerAddress)
-        .send({ from: state.accounts[0] });
-    } else {
-      console.log("Seller is cancelling sale....");
-      await state.contract.methods
-        .cancelSale(presaleAddress, walletToAdd, sellerAddress)
-        .send({ from: state.accounts[0] });
-    }
-
-    refetchSales();
+  const cancelSale = async () => {
+    await cancelSaleAsync();
   };
 
   return (
     <div className="card table__row-action">
       <h3 className="card__header">Pending Sale</h3>
-      <p className="card__text">
-        {isSeller
-          ? "Buyer: " + sale.buyerAddress
-          : "Seller Address: " + sale.sellerAddress}
-        <br />
-        Platform: {sale.presalePlatform}
-        <br />
-        Price: {(sale.price * 10 ** -18).toFixed(4)} BNB
-        <br />
-        Presale: {sale.presaleAddress}
-        <br />
-        Presale Start: {new Date(sale.presaleStartTime * 1000).toUTCString()}
-        <br />
-        Presale End: {new Date(sale.presaleEndTime * 1000).toUTCString()}
-      </p>
-      {sale.cancelled ? (
-        <span className="cross">Cancelled!</span>
-      ) : isSeller ? (
-        sale.buyerAcceptedSaleAndSentBnbToContract ? (
-          sale.moneySentToSellerByContract ? (
-            <span className="tick">Success!</span>
+      <div className="card__text">
+        {isSeller ? (
+          <div className="card__pair">
+            <span>Buyer</span>
+            <span className="card__address">
+              {sale.buyerAddress !== ethers.constants.AddressZero
+                ? sale.buyerAddress
+                : "No buyer yet"}
+            </span>{" "}
+          </div>
+        ) : (
+          <div className="card__pair">
+            <span>Seller</span>
+            <span
+              style={{
+                wordBreak: "break-all",
+              }}
+            >
+              {sale.sellerAddress}
+            </span>{" "}
+          </div>
+        )}
+
+        <div className="card__pair">
+          <span>Platform:</span>
+          <span> {sale.presalePlatform}</span>{" "}
+        </div>
+
+        <div className="card__pair">
+          <span>Price</span>
+          <span> {(sale.price * 10 ** -18).toFixed(4)} BNB</span>{" "}
+        </div>
+
+        <div className="card__pair">
+          <span>Presale:</span>
+          <span className="card__address"> {sale.presaleAddress}</span>{" "}
+        </div>
+
+        <div className="card__pair">
+          {" "}
+          <span>Presale Start</span>
+          <span>
+            {" "}
+            {new Date(sale.presaleStartTime * 1000).toUTCString()}
+          </span>{" "}
+        </div>
+
+        <div className="card__pair">
+          <span>Presale End</span>
+          <span>
+            {" "}
+            {new Date(sale.presaleEndTime * 1000).toUTCString()}
+          </span>{" "}
+        </div>
+
+        <div className="card__pair">
+          <span>Outcome</span>
+          {sale.cancelled ? (
+            <span className="cross">Cancelled</span>
+          ) : sale.moneySentToSellerByContract ? (
+            <span className="tick">Success</span>
+          ) : (
+            <span>Pending</span>
+          )}
+        </div>
+
+        {sale.cancelled ? (
+          <></>
+        ) : // <span className="cross">Cancelled!</span>
+        isSeller ? (
+          sale.buyerAcceptedSaleAndSentBnbToContract ? (
+            sale.moneySentToSellerByContract ? (
+              <></>
+            ) : (
+              // <span className="tick">Success!</span>
+              <>
+                <div className="card__pair">
+                  <span>Action</span>
+                  <div>
+                    <button
+                      className="btn btn--primary"
+                      onClick={() => {
+                        completeSale(
+                          sale.sellerAddress,
+                          sale.presaleAddress,
+                          sale.buyerAddress
+                        );
+                      }}
+                      disabled={isCompletingSale || isCompleteSaleConfigError}
+                      style={
+                        isCompletingSale || isCompleteSaleConfigError
+                          ? {
+                              marginRight: "10px",
+                              cursor: "not-allowed",
+                              opacity: "0.5",
+                            }
+                          : { marginRight: "10px" }
+                      }
+                    >
+                      {isCompletingSale ? "Completing..." : "Complete"}
+                    </button>
+                    <button
+                      className="btn btn--primary"
+                      onClick={() => {
+                        cancelSale(
+                          sale.sellerAddress,
+                          sale.presaleAddress,
+                          sale.buyerAddress,
+                          sale.buyerAcceptedTimestamp
+                        );
+                      }}
+                      disabled={cancelTxLoading || isCancelSaleConfigError}
+                      style={
+                        cancelTxLoading || isCancelSaleConfigError
+                          ? { cursor: "not-allowed", opacity: "0.5" }
+                          : {}
+                      }
+                    >
+                      {cancelTxLoading ? "Cancelling..." : "Cancel"}
+                    </button>
+                    {isCompleteSaleConfigError && (
+                      <span className="card__error">
+                        Wait until buyers wallet is added to presale
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </>
+            )
           ) : (
             <>
-              <button
-                style={{
-                  marginRight: "10px",
-                }}
-                className="btn btn--primary"
-                onClick={() => {
-                  completeSale(
-                    sale.sellerAddress,
-                    sale.presaleAddress,
-                    sale.buyerAddress
-                  );
-                }}
-              >
-                Complete Sale
-              </button>
-              <button
-                className="btn btn--primary"
-                onClick={() => {
-                  cancelSale(
-                    sale.sellerAddress,
-                    sale.presaleAddress,
-                    sale.buyerAddress,
-                    sale.buyerAcceptedTimestamp
-                  );
-                }}
-              >
-                Cancel
-              </button>
+              <div className="card__pair">
+                <span>Action</span>
+                <div>
+                  <button
+                    className="btn btn--primary"
+                    onClick={() => {
+                      cancelSale(
+                        sale.sellerAddress,
+                        sale.presaleAddress,
+                        sale.buyerAddress,
+                        sale.buyerAcceptedTimestamp
+                      );
+                    }}
+                    disabled={cancelTxLoading || isCancelSaleConfigError}
+                    style={
+                      cancelTxLoading || isCancelSaleConfigError
+                        ? { cursor: "not-allowed", opacity: "0.5" }
+                        : {}
+                    }
+                  >
+                    {cancelTxLoading ? "Cancelling..." : "Cancel"}
+                  </button>
+                  {isCancelSaleConfigError &&
+                    (cancelSaleConfigError?.error?.data?.message.includes(
+                      "wallet has already been added"
+                    ) ? (
+                      <span className="card__error">
+                        Your wallet has already been added!
+                      </span>
+                    ) : (
+                      <span className="card__error">
+                        Wait until presale starts
+                      </span>
+                    ))}
+                </div>
+              </div>
+            </>
+          )
+        ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
+          sale.moneySentToSellerByContract ? (
+            <></>
+          ) : (
+            // <span className="tick">Success!</span>
+            <>
+              <div className="card__pair">
+                <span>Action</span>
+                <button
+                  className="btn btn--primary"
+                  onClick={() => {
+                    cancelSale(
+                      sale.sellerAddress,
+                      sale.presaleAddress,
+                      sale.buyerAddress,
+                      sale.buyerAcceptedTimestamp
+                    );
+                  }}
+                  disabled={cancelTxLoading || isCancelSaleConfigError}
+                  style={
+                    cancelTxLoading || isCancelSaleConfigError
+                      ? { cursor: "not-allowed", opacity: "0.5" }
+                      : {}
+                  }
+                >
+                  {cancelTxLoading ? "Cancelling..." : "Cancel"}
+                </button>
+                {cancelSaleConfigError &&
+                  (cancelSaleConfigError?.error?.data?.message.includes(
+                    "wallet has already been added"
+                  ) ? (
+                    <span className="card__error">
+                      Your wallet has already been added!
+                    </span>
+                  ) : (
+                    <span className="card__error">
+                      Wait until presale starts!!!
+                    </span>
+                  ))}
+                {!isCancelSaleConfigError && (
+                  <span className="card__error">
+                    You can cancel within 5 minutes
+                  </span>
+                )}
+              </div>
             </>
           )
         ) : (
-          <button
-            className="btn btn--primary"
-            onClick={() => {
-              cancelSale(
-                sale.sellerAddress,
-                sale.presaleAddress,
-                sale.buyerAddress,
-                sale.buyerAcceptedTimestamp
-              );
-            }}
-          >
-            Cancel
-          </button>
-        )
-      ) : sale.buyerAcceptedSaleAndSentBnbToContract ? (
-        sale.moneySentToSellerByContract ? (
-          <span className="tick">Success!</span>
-        ) : (
-          <button
-            className="btn btn--primary"
-            onClick={() => {
-              cancelSale(
-                sale.sellerAddress,
-                sale.presaleAddress,
-                sale.buyerAddress,
-                sale.buyerAcceptedTimestamp
-              );
-            }}
-          >
-            Cancel
-          </button>
-        )
-      ) : (
-        <button
-          className="btn btn--primary"
-          onClick={() => {
-            acceptSale(sale.sellerAddress, sale.presaleAddress, sale.price);
-          }}
-        >
-          Accept Sale
-        </button>
-      )}
+          <>
+            <div className="card__pair">
+              <span>Action</span>
+              <button
+                className="btn btn--primary"
+                onClick={() => {
+                  acceptSale(
+                    sale.sellerAddress,
+                    sale.presaleAddress,
+                    sale.price
+                  );
+                }}
+                disabled={isAcceptSaleLoading}
+                style={
+                  isAcceptSaleLoading
+                    ? { cursor: "not-allowed", opacity: "0.5" }
+                    : {}
+                }
+              >
+                {isAcceptSaleLoading ? "Accepting..." : "Accept Sale"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
 
 export const CreateSale = () => {
   const { state } = useEth();
+  const { address } = useAccount();
 
+  const { chain } = useNetwork();
+
+  const [isOpenBook, setIsOpenBook] = useState(false);
   const [presaleAddress, setPresaleAddress] = useState("");
   const [walletToAdd, setWalletToAdd] = useState("");
   const [price, setPrice] = useState(0);
 
-  const isInvalidAddress = (address) => {
-    const invalid = !state.web3.utils.isAddress(address);
-    console.log(`Invalid address: ${invalid}`);
-    return invalid;
-  };
+  const {
+    config: createSaleConfig,
+    isError: createSalePrepareTxFailed,
+    refetch,
+  } = usePrepareContractWrite({
+    address: escrowAbi.networks[chain.id].address,
+    functionName: "createSale",
+    abi: escrowAbi.abi,
+    args: !isOpenBook
+      ? [
+          presaleAddress,
+          walletToAdd,
+          price > 0 ? ethers.utils.parseEther(price).toString() : 0,
+        ]
+      : [
+          presaleAddress,
+          ethers.constants.AddressZero,
+          price > 0 ? ethers.utils.parseEther(price).toString() : 0,
+        ],
+    enabled: false,
 
-  const createSale = async () => {
-    console.log(
-      `Creating sale for presale ${presaleAddress} and wallet ${walletToAdd}, price ${price}...`
-    );
-    console.log(`Accounts: ${state.accounts}`);
-    let priceInWei = state.web3.utils.toWei(price.toString(), "ether");
-    await state.contract.methods
-      .createSale(presaleAddress, walletToAdd, priceInWei)
-      .send({ from: state.accounts[0] });
-  };
+    onSuccess: () => {
+      console.log("Create sale success");
+    },
+    onSettled: (data) => {
+      console.log("Create sale settled ", data);
+    },
+  });
+
+  useEffect(() => {
+    if (isOpenBook) {
+      if (!isInvalidAddress(presaleAddress)) {
+        refetch();
+      } else {
+        console.log("Create sale form is invalid");
+      }
+    } else {
+      if (!isInvalidAddress(presaleAddress) && !isInvalidAddress(walletToAdd)) {
+        refetch();
+      } else {
+        console.log("Create sale form is invalid");
+      }
+    }
+  }, [presaleAddress, walletToAdd, price, isOpenBook]);
+
+  const { write: createSaleAsync, data: createSaleResult } =
+    useContractWrite(createSaleConfig);
+
+  const { isLoading: createSaleTransactionLoading, isSuccess } =
+    useWaitForTransaction({
+      hash: createSaleResult?.hash,
+      onSuccess: () => {
+        console.log("Create sale transaction success");
+        refetch();
+      },
+      onError: (error) => {
+        console.log("Create sale transaction error: ", error);
+      },
+    });
+
   return (
     <div>
-      {state.accounts?.length ? (
+      {address ? (
         <>
+          <h1 className="title">Create Sale</h1>
+
           <form
             className="card form-group"
             onSubmit={(e) => {
               e.preventDefault();
             }}
           >
-            <div class="form-group__control">
-              <label class="form-group__label tick" htmlFor="walletToAdd">
-                Wallet To Add
+            <div
+              style={{
+                display: "flex",
+              }}
+              className="form-group__control"
+            >
+              <label
+                style={{
+                  marginRight: "1rem",
+                }}
+                className="form-group__label"
+                htmlFor="OpenBookSaleCheck"
+              >
+                Open Book Sale
               </label>
               <input
-                required
-                type="text"
-                placeholder="Wallet to Add (buyer)"
-                value={walletToAdd}
-                onChange={(e) => setWalletToAdd(e.target.value)}
-                class="form-group__input"
-                id="walletToAdd"
+                type="checkbox"
+                className="form-group__input"
+                id="OpenBookSaleCheck"
+                checked={isOpenBook}
+                onChange={(e) => setIsOpenBook(e.target.checked)}
               />
             </div>
-            <div class="form-group__control">
-              <label class="form-group__label tick" htmlFor="presale">
+            {!isOpenBook && (
+              <div className="form-group__control">
+                <label
+                  className={
+                    isInvalidAddress(walletToAdd)
+                      ? "form-group__label cross"
+                      : "form-group__label tick"
+                  }
+                  htmlFor="walletToAdd"
+                >
+                  Wallet To Add
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Wallet to Add (buyer)"
+                  value={walletToAdd}
+                  onChange={(e) => setWalletToAdd(e.target.value)}
+                  className="form-group__input"
+                  id="walletToAdd"
+                />
+              </div>
+            )}
+
+            <div className="form-group__control">
+              <label
+                className={
+                  isInvalidAddress(presaleAddress)
+                    ? "form-group__label cross"
+                    : "form-group__label tick"
+                }
+                htmlFor="presale"
+              >
                 Presale Wallet
               </label>
               <input
@@ -406,105 +876,45 @@ export const CreateSale = () => {
                 type="text"
                 placeholder="Presale Address"
                 value={presaleAddress}
-                class="form-group__input"
+                className="form-group__input"
                 onChange={(e) => setPresaleAddress(e.target.value)}
               />
             </div>
-            <div class="form-group__control">
-              <label class="form-group__label tick" htmlFor="price">
+            <div className="form-group__control">
+              <label className="form-group__label" htmlFor="price">
                 Price
               </label>
               <input
                 id="price"
                 required
+                min={0}
+                step="any"
                 type="number"
                 placeholder="Price"
-                value={price}
-                class="form-group__input"
+                className="form-group__input"
                 onChange={(e) => setPrice(e.target.value)}
               />
             </div>
             <button
               disabled={
-                isInvalidAddress(walletToAdd) ||
-                isInvalidAddress(presaleAddress)
-              }
-              onClick={createSale}
-              class="btn btn--primary"
-            >
-              Create Sale
-            </button>
-          </form>
-        </>
-      ) : (
-        <h3>You are not connected.</h3>
-      )}
-    </div>
-  );
-};
-
-export const CompleteSale = () => {
-  const { state } = useEth();
-
-  const [sellerAddress, setSellerAddress] = useState("");
-  const [presaleAddress, setPresaleAddress] = useState("");
-  const [walletToAdd, setWalletToAdd] = useState("");
-
-  const isInvalidAddress = (address) => {
-    const invalid = !state.web3.utils.isAddress(address);
-    console.log(`Invalid address: ${invalid}`);
-    return invalid;
-  };
-
-  const completeSale = async () => {
-    console.log(
-      `Completing sale for seller ${sellerAddress}, presale ${presaleAddress} and wallet ${walletToAdd}...`
-    );
-    console.log(`Accounts: ${state.accounts}`);
-    await state.contract.methods
-      .completeSale(sellerAddress, presaleAddress, walletToAdd)
-      .send({ from: state.accounts[0] });
-  };
-  return (
-    <div>
-      <h1>Sales:</h1>
-      {state.accounts?.length ? (
-        <>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
-            <input
-              required
-              type="text"
-              placeholder="Wallet to Add (buyer)"
-              value={walletToAdd}
-              onChange={(e) => setWalletToAdd(e.target.value)}
-            />
-            <input
-              required
-              type="text"
-              placeholder="Presale Address"
-              value={presaleAddress}
-              onChange={(e) => setPresaleAddress(e.target.value)}
-            />
-            <input
-              required
-              type="text"
-              placeholder="Seller"
-              value={sellerAddress}
-              onChange={(e) => setSellerAddress(e.target.value)}
-            />
-            <button
-              disabled={
-                isInvalidAddress(walletToAdd) ||
+                (!isOpenBook && isInvalidAddress(walletToAdd)) ||
                 isInvalidAddress(presaleAddress) ||
-                isInvalidAddress(sellerAddress)
+                createSalePrepareTxFailed
               }
-              onClick={completeSale}
+              style={
+                (!isOpenBook && isInvalidAddress(walletToAdd)) ||
+                isInvalidAddress(presaleAddress) ||
+                createSalePrepareTxFailed ||
+                createSaleTransactionLoading
+                  ? { opacity: 0.5, cursor: "not-allowed" }
+                  : { opacity: 1 }
+              }
+              onClick={createSaleAsync}
+              className="btn btn--primary"
             >
-              Complete Sale
+              {createSaleTransactionLoading
+                ? "Creating Sale..."
+                : "Create Sale"}
             </button>
           </form>
         </>

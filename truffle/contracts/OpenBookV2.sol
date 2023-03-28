@@ -76,9 +76,9 @@ contract OpenBookV2 {
     mapping(address => SaleInfo[]) sales;
     mapping(address => SellerStats) public sellerStats;
     mapping(address => BuyerStats) public buyerStats;
-    uint256 totalOpenBookSales = 0;
-    address[] sellersWithOpenBookSales;
-    mapping(address => uint256) totalPendingSalesForSeller;
+    uint256 public totalOpenBookSales = 0;
+    address[] public sellersWithOpenBookSales;
+    mapping(address => uint256) public totalPendingOpenBookSalesForSeller;
 
     address public owner;
     address public feeAddress;
@@ -119,6 +119,11 @@ contract OpenBookV2 {
         address user
     ) internal view returns (bool) {
         IPinksaleContract presaleInstance = IPinksaleContract(presale);
+        uint numberOfWhitelistedUsers = presaleInstance
+            .getNumberOfWhitelistedUsers();
+        if (numberOfWhitelistedUsers == 0) {
+            return false;
+        }
         address[] memory users = presaleInstance.getWhitelistedUsers(
             0,
             presaleInstance.getNumberOfWhitelistedUsers()
@@ -167,6 +172,8 @@ contract OpenBookV2 {
         SaleInfo memory saleInfo;
         PoolSettings memory poolSettings = getPoolSettings(presale);
 
+        require(price > 0.001 ether, "Price must be greater than 0.001 BNB");
+
         if (block.timestamp > poolSettings.startTime) {
             revert("Presale has already started");
         }
@@ -189,7 +196,7 @@ contract OpenBookV2 {
             });
 
             totalOpenBookSales++;
-            totalPendingSalesForSeller[msg.sender]++;
+            totalPendingOpenBookSalesForSeller[msg.sender]++;
             // check if seller already has an open book sale
             bool sellerHasOpenBookSale = false;
             for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
@@ -315,11 +322,11 @@ contract OpenBookV2 {
             SaleInfo memory sale = sales[seller][i];
 
             if (
-                sale.presaleAddress == presale &&
-                sale.cancelled == false &&
-                sale.walletAdded == false &&
-                sale.buyerAcceptedSaleAndSentBnbToContract == false &&
-                sale.price == price
+                (sale.presaleAddress == presale &&
+                    sale.cancelled == false &&
+                    sale.walletAdded == false &&
+                    sale.buyerAcceptedSaleAndSentBnbToContract == false &&
+                    sale.price == price)
             ) {
                 saleIndex = i;
                 saleInfo = sale;
@@ -328,6 +335,13 @@ contract OpenBookV2 {
                 // this is the sale we want to accept, can be open booking or specific wallet
             }
         }
+
+        require(
+            saleInfo.buyerAddress == address(0) ||
+                saleInfo.buyerAddress == msg.sender,
+            "You are not the buyer for this sale nor is it an open book sale"
+        );
+
         if (saleInfo.price == 0) {
             revert("Sale does not exist");
         }
@@ -335,8 +349,6 @@ contract OpenBookV2 {
             msg.value == saleInfo.price,
             "You must send the exact amount of ETHER"
         );
-
-        payable(address(this)).transfer(msg.value);
 
         // if buyer accepted open book sale, set buyer address to msg.sender
         if (saleInfo.buyerAddress == address(0)) {
@@ -347,9 +359,9 @@ contract OpenBookV2 {
                 .salesToABuyerForAPresale[msg.sender]++;
 
             totalOpenBookSales--;
-            totalPendingSalesForSeller[seller]--;
+            totalPendingOpenBookSalesForSeller[seller]--;
             // remove seller from sellersWithOpenBookSales if he has no more open book sales
-            if (totalPendingSalesForSeller[seller] == 0) {
+            if (totalPendingOpenBookSalesForSeller[seller] == 0) {
                 for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
                     if (sellersWithOpenBookSales[i] == seller) {
                         uint256 lastIndex = sellersWithOpenBookSales.length - 1;
@@ -361,6 +373,33 @@ contract OpenBookV2 {
                     }
                 }
             }
+
+            bool hasBuyerDealtWithSeller = false;
+
+            for (
+                uint256 i = 0;
+                i <
+                buyerStats[saleInfo.buyerAddress]
+                    .sellersBuyerHasDealtWith
+                    .length;
+                i++
+            ) {
+                if (
+                    buyerStats[saleInfo.buyerAddress].sellersBuyerHasDealtWith[
+                        i
+                    ] == seller
+                ) {
+                    hasBuyerDealtWithSeller = true;
+                    // save gas and break, if we dont then we will have to loop through all the sales
+                    break;
+                }
+            }
+
+            if (hasBuyerDealtWithSeller == false) {
+                buyerStats[saleInfo.buyerAddress].sellersBuyerHasDealtWith.push(
+                    seller
+                );
+            }
         }
         saleInfo.buyerAcceptedSaleAndSentBnbToContract = true;
         saleInfo.buyerAcceptedTimestamp = block.timestamp;
@@ -370,6 +409,8 @@ contract OpenBookV2 {
 
     // both seller and buyer can cancel a sale. here buyer can onlu cancel within 5 minutes of accepting the sale
 
+    event RefundSent(address buyer, uint256 amount);
+
     function cancelSale(
         address presale,
         address walletToAdd,
@@ -377,6 +418,9 @@ contract OpenBookV2 {
     ) public {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
+
+        // deal with scenario when buyer hasnt accepted and is trying to cancel.
+        // rn it deals by saying that time difference is block.timestamp .
 
         for (uint256 i = 0; i < sellerStats[sellersAddress].totalSales; i++) {
             SaleInfo memory sale = sales[sellersAddress][i];
@@ -392,6 +436,14 @@ contract OpenBookV2 {
                 break;
             }
         }
+
+        if (msg.sender == walletToAdd) {
+            require(
+                saleInfo.buyerAcceptedTimestamp != 0,
+                "You have not accepted this sale yet"
+            );
+        }
+
         if (saleInfo.price == 0) {
             revert("Sale does not exist");
         }
@@ -419,54 +471,69 @@ contract OpenBookV2 {
         // Buyer can't. Seller may have submitted the wallet, before it get's added he can maliciously cancel the sale and get a refund.
         // He can only cancel within 5 minutes of accepting the sale.
         if (msg.sender == saleInfo.buyerAddress) {
+            bool buyerWalletAdded = isUserWhitelistedCustom(
+                saleInfo.presaleAddress,
+                saleInfo.buyerAddress
+            );
+
+            if (buyerWalletAdded == true) {
+                revert(
+                    "Your wallet has already been added to the presale. You can't cancel the sale even if if you recently accepted it"
+                );
+            }
+
             uint256 timeDifference = block.timestamp -
                 saleInfo.buyerAcceptedTimestamp;
 
-            // if presale hasn't started yet
-            if (saleInfo.presaleStartTime >= block.timestamp) {
-                // if it's been more than 5 minutes. revert.
-                if (timeDifference > 5 minutes) {
-                    revert(
-                        "You can't cancel a sale after 5 minutes of accepting it (as a buyer)"
-                    );
-                } else {
-                    bool buyerWalletAdded = isUserWhitelistedCustom(
-                        saleInfo.presaleAddress,
-                        saleInfo.buyerAddress
-                    );
+            // we know that he isnt WL...
 
-                    if (buyerWalletAdded == true) {
-                        revert(
-                            "Your wallet has already been added to the presale. You can't cancel the sale even if if you recently accepted it"
-                        );
-                    }
-                }
-            } else {
-                // presale has started.
-                // check if buyers wallet was added.
-                bool buyerWalletAdded = isUserWhitelistedCustom(
-                    saleInfo.presaleAddress,
-                    saleInfo.buyerAddress
+            // if presale hasn't started yet and its been more than 5 minutes.. REVERT.
+            if (
+                saleInfo.presaleStartTime >= block.timestamp &&
+                timeDifference > 5 minutes
+            ) {
+                // we revert to give seller a chance to get buyers wallet added. when the presale starts, the buyer can cancel the sale.
+                revert(
+                    "You can't cancel a sale after 5 minutes of accepting it (as a buyer)"
                 );
-
-                if (buyerWalletAdded == true) {
-                    revert(
-                        "Your wallet has already been added to the presale. You can't cancel the sale"
-                    );
-                }
             }
         }
 
         saleInfo.cancelled = true;
 
-        // if buyer sent BNB to ca refund him.
         if (saleInfo.buyerAcceptedSaleAndSentBnbToContract == true) {
-            payable(saleInfo.buyerAddress).transfer(saleInfo.price);
+            bool refunded = payable(saleInfo.buyerAddress).send(saleInfo.price);
+
+            require(refunded == true, "Refund failed");
         }
+
+        emit RefundSent(saleInfo.buyerAddress, saleInfo.price);
 
         sellerStats[sellersAddress].totalSalesCancelled++;
         sellerStats[sellersAddress].totalSalesPending--;
         sales[sellersAddress][saleIndex] = saleInfo;
+
+        if (totalOpenBookSales > 0) {
+            totalOpenBookSales--;
+        }
+
+        if (totalPendingOpenBookSalesForSeller[saleInfo.sellerAddress] > 0) {
+            totalPendingOpenBookSalesForSeller[saleInfo.sellerAddress]--;
+        }
+
+        // remove seller from sellersWithOpenBookSales if he has any. We assume he does since he has some openBookSales.
+        if (totalPendingOpenBookSalesForSeller[saleInfo.sellerAddress] == 0) {
+            for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
+                if (sellersWithOpenBookSales[i] == saleInfo.sellerAddress) {
+                    uint256 lastIndex = sellersWithOpenBookSales.length - 1;
+                    sellersWithOpenBookSales[i] = sellersWithOpenBookSales[
+                        lastIndex
+                    ];
+
+                    sellersWithOpenBookSales.pop();
+                }
+            }
+        }
     }
 
     function completeSale(
