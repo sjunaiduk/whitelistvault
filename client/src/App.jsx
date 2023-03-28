@@ -58,7 +58,7 @@ function App() {
             </Routes>
           </>
         ) : (
-          <h1>Connect to Metamask</h1>
+          <Home isUserSeller={seller} />
         )}
       </>
     </div>

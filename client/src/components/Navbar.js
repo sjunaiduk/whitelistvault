@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAccount } from "wagmi";
 import { ConnectWallet } from "./ConnectWallet";
 
 export const NavBar = ({ switchTheSeller, isUserSeller }) => {
   const [burgerExpanded, setBurgerExpanded] = useState(false);
   const [navbarExpanded, setNavbarExpanded] = useState(false);
+  const { address } = useAccount();
   return (
     <div className={"navbar-new"}>
       <div className="navbar-new__filler-nav">
@@ -17,9 +19,12 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
           }}
         ></i>
         <div className="nav-filler__buttons">
-          <button className="btn btn--secondary" onClick={switchTheSeller}>
-            Switch View
-          </button>
+          {address && (
+            <button className="btn btn--secondary" onClick={switchTheSeller}>
+              Switch View
+            </button>
+          )}
+
           <ConnectWallet />
         </div>
       </div>
@@ -40,41 +45,46 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
               Home
             </Link>
           </li>
-          {isUserSeller ? (
-            <li className="navbar-new__item">
-              <Link to="/createSale" className="navbar__link">
-                Create Sale
-              </Link>
-            </li>
-          ) : null}
-
-          {!isUserSeller ? (
-            <li className="navbar-new__item">
-              <Link to="/openBookSales" className="navbar__link">
-                Openbook sales
-              </Link>
-            </li>
-          ) : null}
-
-          <li className="navbar-new__item">
-            {!isUserSeller ? (
-              <Link to="/sales" className="navbar__link">
-                Buyer Sales
-              </Link>
+          {address ? (
+            isUserSeller ? (
+              <>
+                <li className="navbar-new__item">
+                  <Link to="/createSale" className="navbar__link">
+                    Create Sale
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/sales" className="navbar__link">
+                    Seller Sales
+                  </Link>
+                </li>
+              </>
             ) : (
-              <Link to="/sales" className="navbar__link">
-                Seller Sales
-              </Link>
-            )}
-          </li>
+              <>
+                <li className="navbar-new__item">
+                  <Link to="/openBookSales" className="navbar__link">
+                    Openbook sales
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/sales" className="navbar__link">
+                    Buyer Sales
+                  </Link>
+                </li>
+              </>
+            )
+          ) : null}
+
           <li className="navbar-new__item mobile-hidden">
             <ConnectWallet />
           </li>
-          <li className="navbar-new__item mobile-hidden">
-            <button className="btn btn--secondary" onClick={switchTheSeller}>
-              Switch View
-            </button>
-          </li>
+          {address && (
+            <li className="navbar-new__item mobile-hidden">
+              <button className="btn btn--secondary" onClick={switchTheSeller}>
+                Switch View
+              </button>
+            </li>
+          )}
         </ul>
       </div>
     </div>
