@@ -8,13 +8,11 @@ import {
   ViewOpenBookSales,
   ViewSales,
 } from "./components/SalesComponents";
-import { useEth } from "./contexts/EthContext";
 
 import "./style/normalize.css";
 import "./style/style.css";
 
 function App() {
-  const { state } = useEth();
   const { address } = useAccount();
   const [seller, setSeller] = useState(true);
 

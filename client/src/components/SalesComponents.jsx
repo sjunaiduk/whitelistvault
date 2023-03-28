@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
-import { useEth } from "../contexts/EthContext";
 import {
   useAccount,
   usePrepareContractWrite,
@@ -731,7 +730,6 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
 };
 
 export const CreateSale = () => {
-  const { state } = useEth();
   const { address } = useAccount();
 
   const { chain } = useNetwork();

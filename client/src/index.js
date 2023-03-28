@@ -5,7 +5,6 @@ import "./style/style.css";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
-import { EthProvider } from "./contexts/EthContext";
 import { WagmiConfig, createClient } from "wagmi";
 import { ConnectKitProvider, getDefaultClient } from "connectkit";
 import { bscTestnet } from "wagmi/chains";
@@ -21,9 +20,7 @@ root.render(
   <BrowserRouter>
     <WagmiConfig client={client}>
       <ConnectKitProvider>
-        <EthProvider>
-          <App />
-        </EthProvider>
+        <App />
       </ConnectKitProvider>
     </WagmiConfig>
   </BrowserRouter>

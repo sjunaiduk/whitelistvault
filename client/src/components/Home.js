@@ -2,14 +2,18 @@ export const Home = ({ isUserSeller }) => {
   return (
     <div className="main-container">
       <div className="main-header">
-        <h1>Secure Your Preasle Spot with Confidence</h1>
-        <h2>
-          Whitelist Haven is a decentralized escrow service for buying and
-          selling presale whitelist spots for crypto projects
-        </h2>
+        <div className="main-header-text">
+          <h1>Whitelist</h1>
+          <span> Haven</span>
+          <h2>
+            Whitelist Haven is a decentralized escrow service for buying and
+            selling presale whitelist spots for crypto projects
+          </h2>
+        </div>
       </div>
 
       <div className="main-features">
+        <h2>Features</h2>
         <ul className="main-features-list">
           <li className="main-features-list-item">
             <h3>Secure</h3>
@@ -84,12 +88,12 @@ export const Home = ({ isUserSeller }) => {
             </p>
           </li>
         </ul>
-        <p>
-          By using WhitelistHaven, you can buy and sell presale tokens with
-          peace of mind knowing that your transaction is secure and protected by
-          our escrow service.
-        </p>
       </div>
+      <p>
+        By using WhitelistHaven, you can buy and sell presale tokens with peace
+        of mind knowing that your transaction is secure and protected by our
+        escrow service.
+      </p>
     </div>
   );
 };

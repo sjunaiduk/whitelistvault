@@ -715,7 +715,7 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-/* Titles / Dashboard */
+/* Home page */
 
 .title {
   text-align: center;
@@ -724,11 +724,90 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 5rem;
 }
 
-.main-title {
-  margin-bottom: 0;
-  color: rgba(255, 255, 255, 0.8);
+.main-header-text h1 {
+  display: inline-block;
+  text-transform: capitalize;
+  font-weight: 100;
+  line-height: 45px;
+  font-size: 6.4rem;
+  letter-spacing: -0.005em;
+}
+
+.main-header-text span {
+  font-weight: 800;
+  font-size: 6rem;
+  text-transform: uppercase;
+}
+.main-header-text h2 {
+  font-size: 2.4rem;
+  font-weight: 100;
+  line-height: 1.5;
+  letter-spacing: 0.005em;
 }
 
 .main-container {
   margin: 0 5%;
+}
+
+.main-header {
+  margin-bottom: 8rem;
+}
+
+.main-features {
+  background: #5d515130;
+  border-radius: 15px;
+  padding: 2rem;
+}
+.main-features h2 {
+  margin: 0;
+  text-transform: capitalize;
+  font-weight: 300;
+  font-size: 5rem;
+}
+
+.main-features-list {
+  list-style: none;
+  padding: 0;
+}
+
+.main-features-list-item {
+  margin-bottom: 4rem;
+}
+
+.main-features-list-item h3 {
+  font-size: 3rem;
+  font-weight: 600;
+}
+
+.main-features-list-item p {
+  font-weight: 100;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.main-howitworks-list {
+  list-style: none;
+  padding: 0;
+}
+
+.main-howitworks-list-item {
+  margin-bottom: 4rem;
+}
+
+.main-howitworks-list-item h3 {
+  font-size: 3rem;
+  font-weight: 600;
+}
+
+.main-howitworks-list-item p {
+  font-weight: 100;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.main-howitworks {
+  background: #5d515130;
+  border-radius: 15px;
+  padding: 2rem;
+  margin-top: 4rem;
 }
