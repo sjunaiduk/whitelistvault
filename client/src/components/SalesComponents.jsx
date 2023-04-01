@@ -72,7 +72,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
     }
   };
   return (
-    <div>
+    <div className="content">
       {isSeller ? (
         <h2 className="title">Your Sales</h2>
       ) : (
@@ -806,7 +806,7 @@ export const CreateSale = () => {
     });
 
   return (
-    <div>
+    <div className="content">
       {address ? (
         <>
           <h1 className="title">Create Sale</h1>

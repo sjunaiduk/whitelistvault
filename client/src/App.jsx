@@ -23,7 +23,14 @@ function App() {
   }
 
   return (
-    <div id="App">
+    <div
+      id="App"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+      }}
+    >
       <NavBar switchTheSeller={switchSeller} isUserSeller={seller} />
 
       <>

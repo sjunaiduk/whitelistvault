@@ -7,7 +7,7 @@ export const Home = ({ isUserSeller }) => {
   const { disconnect } = useDisconnect();
   const { address } = useAccount();
   return (
-    <>
+    <div className="content">
       <section className="main-header block--skewed-left">
         <div className="main-container hero-grid">
           <div className="main-header-text">
@@ -140,6 +140,6 @@ export const Home = ({ isUserSeller }) => {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 };
