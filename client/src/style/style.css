@@ -65,10 +65,10 @@ body {
   color: #fff;
   border-radius: 20px;
   font-weight: bold;
-  transition: background-position 0.4s ease-in;
+  transition: all 250ms ease 0s;
 }
 
-.btn:hover {
+.btn:enabled {
   cursor: pointer;
   background-position: left;
 }
@@ -79,14 +79,22 @@ body {
   background-size: 300%;
 }
 
+.btn--primary:hover:enabled {
+  box-shadow: rgb(255, 0, 199) 0px 0px 16px 0px;
+}
+
 .btn--secondary {
   background-image: linear-gradient(to right, #b3238f, #840163 50%);
   background-position: right;
   background-size: 300%;
 }
 
+.btn--secondary:hover:enabled {
+  box-shadow: rgb(255, 0, 199) 0px 0px 16px 0px;
+}
+
 .btn--large {
-  padding: 0.8rem 4rem;
+  padding: 0.8rem 8rem;
   font-size: 2.4rem;
 }
 
@@ -204,7 +212,7 @@ body {
   top: 52px;
   left: 0;
   height: 100vh;
-  z-index: 0;
+  z-index: 1;
   width: 0;
   overflow: hidden;
   transition: width 0.4s ease-in-out;
@@ -298,7 +306,7 @@ body {
 @media screen and (max-width: 380px) {
 }
 
-@media screen and (min-width: 990px) {
+@media screen and (min-width: 1050px) {
   .mobile-hidden {
     display: block;
     margin: 0 !important;
@@ -315,7 +323,9 @@ body {
     transition: none;
     align-items: center;
     top: 0;
-    padding-right: 2rem;
+    padding: 0.5rem 2rem;
+    position: fixed;
+    z-index: 999;
   }
 
   .navbar-new__filler-nav {
@@ -734,27 +744,38 @@ input[type="number"]::-webkit-outer-spin-button {
   text-transform: uppercase;
   font-weight: 100;
   line-height: 45px;
-  font-size: 7.4rem;
+  font-size: 6.4rem;
 }
 
 .main-header-text span {
   font-weight: 800;
-  font-size: 7.4rem;
+  font-size: 6.4rem;
   text-transform: uppercase;
 }
 .main-header-text h2 {
   font-size: 2.4rem;
   font-weight: 300;
   margin-bottom: 4rem;
+  opacity: 0.8;
 }
 
 .main-container {
-  margin: 0 4%;
+  margin: 0 auto;
+  max-width: 1400px;
 }
 
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 2000px) {
   .main-container {
-    padding-left: 5rem;
+    max-width: 1800px;
+  }
+}
+
+@media screen and (min-width: 450px) {
+  section {
+    padding-inline: 3rem;
+  }
+  .main-header-text {
+    font-size: 7.4rem;
   }
 }
 
@@ -801,8 +822,8 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .main-features h2 {
   margin: 0;
-  text-transform: capitalize;
-  font-weight: 300;
+  text-transform: uppercase;
+  font-weight: 500;
   font-size: 5rem;
 }
 
@@ -817,13 +838,19 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .main-features-list-item h3 {
   font-size: 3rem;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .main-features-list-item p {
   font-weight: 300;
   font-size: 2rem;
   margin: 0;
+}
+.main-howitworks h2 {
+  margin: 0;
+  text-transform: uppercase;
+  font-weight: 500;
+  font-size: 5rem;
 }
 
 .main-howitworks-list {
@@ -837,18 +864,17 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .main-howitworks-list-item h3 {
   font-size: 3rem;
-  font-weight: 600;
+  font-weight: 300;
 }
 
 .main-howitworks-list-item p {
   font-weight: 300;
   font-size: 2rem;
+  opacity: 0.8;
   margin: 0;
 }
 
 .main-howitworks {
-  background: #5d515130;
-  border-radius: 15px;
   padding: 2rem;
   margin-top: 4rem;
 }

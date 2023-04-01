@@ -66,7 +66,7 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
                     Openbook sales
                   </Link>
                 </li>
-                <li>
+                <li className="navbar-new__item">
                   <Link to="/sales" className="navbar__link">
                     Buyer Sales
                   </Link>
