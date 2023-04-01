@@ -786,10 +786,20 @@ input[type="number"]::-webkit-outer-spin-button {
 .main-header {
   background: #151016;
   margin-bottom: 2rem;
-
+  padding-top: 2rem;
   margin-top: 53px;
-  padding-top: 6rem;
   padding-bottom: 2rem;
+}
+
+@media screen and (min-width: 768px) {
+  .main-header {
+    padding-top: 4rem;
+  }
+}
+@media screen and (min-width: 1024px) {
+  .main-header {
+    padding-top: 8rem;
+  }
 }
 
 .main-header-image {
@@ -939,11 +949,11 @@ input[type="number"]::-webkit-outer-spin-button {
 */
 
 .footer {
-  padding: 2rem;
-  color: #fff;
+  padding: 0.5rem;
   font-size: 1.6rem;
   font-weight: 300;
   margin-top: 4rem;
+  border-top: 1px solid #ffffff23;
 }
 
 .footer__container {
