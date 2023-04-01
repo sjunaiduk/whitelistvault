@@ -219,7 +219,7 @@ export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
     }
   };
   return (
-    <div>
+    <div className="content">
       <h1 className="title">Open Book Sales</h1>
       <div className="table" id="dim">
         <ul className="table__header">
