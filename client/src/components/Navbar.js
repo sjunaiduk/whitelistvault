@@ -55,7 +55,7 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
                 </li>
                 <li className="navbar-new__item">
                   <Link to="/sales" className="navbar__link">
-                    Sales
+                    Seller Sales
                   </Link>
                 </li>
               </>
@@ -87,6 +87,25 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
           )}
         </ul>
       </div>
+
+      {navbarExpanded && (
+        <div
+          id="navbar-new__overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 10,
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+          onClick={() => {
+            setBurgerExpanded(!burgerExpanded);
+            setNavbarExpanded(!navbarExpanded);
+          }}
+        ></div>
+      )}
     </div>
   );
 };

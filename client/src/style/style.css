@@ -129,6 +129,13 @@ body {
   margin: 0.3rem 0 7rem;
   box-shadow: 0px 2px 40px rgba(0, 0, 0, 0.251);
 }
+
+@media screen and (min-width: 1050px) {
+  #navbar-new__overlay {
+    display: none;
+  }
+}
+
 .navbar__items {
   list-style: none;
   margin: 0;
@@ -212,7 +219,7 @@ body {
   top: 52px;
   left: 0;
   height: 100vh;
-  z-index: 1;
+  z-index: 99;
   width: 0;
   overflow: hidden;
   transition: width 0.4s ease-in-out;
@@ -240,7 +247,7 @@ body {
 .navbar-new__expanded#navbar-new__content {
   width: max(45vw, 180px);
   opacity: 1;
-  z-index: 1;
+  z-index: 99;
 }
 
 .navbar-new__filler-nav {
@@ -997,8 +1004,13 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .footer__link {
   color: #fff;
+  opacity: 0.8;
   text-decoration: none;
   transition: all 0.3s ease;
+}
+
+.footer__link:hover {
+  opacity: 1;
 }
 
 @media screen and (min-width: 768px) {
