@@ -34,7 +34,7 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
       >
         <div className="navbar-new__header">
           <div className="navbar__logo">
-            <span>Escrow Dapp</span>
+            <span>Whitelist Vault</span>
             <i className="logo"></i>
           </div>
         </div>
@@ -53,7 +53,7 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
                     Create Sale
                   </Link>
                 </li>
-                <li>
+                <li className="navbar-new__item">
                   <Link to="/sales" className="navbar__link">
                     Seller Sales
                   </Link>

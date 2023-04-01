@@ -29,7 +29,7 @@ html {
 body {
   font-size: 2.2rem;
   min-height: 100vh;
-  padding-top: 80px;
+  overflow-x: hidden;
 }
 
 @media screen and (min-width: 1024px) {
@@ -52,7 +52,7 @@ body {
 /* Background */
 
 body {
-  background: linear-gradient(135deg, #251c25, #151016);
+  background: linear-gradient(135deg, #151016, #141114);
   background-repeat: no-repeat;
   color: #fff;
 }
@@ -198,8 +198,8 @@ body {
 #navbar-new__content {
   display: flex;
   flex-direction: column;
-  background-color: #1c151d;
-  border-bottom: 2px solid #fe4bc6;
+  background-color: #151016;
+  /* border-bottom: 2px solid #fe4bc6; */
   position: fixed;
   top: 52px;
   left: 0;
@@ -237,8 +237,8 @@ body {
 
 .navbar-new__filler-nav {
   display: flex;
-  background-color: #1c151d;
-  border-bottom: 2px solid #fe4bc6;
+  background-color: #151016;
+  /* border-bottom: 2px solid #fe4bc6; */
   width: 100vw;
   justify-content: space-between;
   align-items: center;
@@ -298,7 +298,7 @@ body {
 @media screen and (max-width: 380px) {
 }
 
-@media screen and (min-width: 950px) {
+@media screen and (min-width: 990px) {
   .mobile-hidden {
     display: block;
     margin: 0 !important;
@@ -453,7 +453,7 @@ body {
 
 /* List Of X */
 .table {
-  margin: 3rem;
+  margin: 8rem 3rem;
   font-size: 1.8rem;
   overflow: auto;
   background-color: #35353525;
@@ -587,17 +587,17 @@ body {
     overflow: hidden;
   }
   .table {
-    margin: 3rem 10rem;
+    margin: 10rem;
   }
 }
 
 @media screen and (min-width: 1024px) {
   .table .card {
-    margin: 3rem auto;
+    margin: 10rem auto;
   }
 
   .table {
-    margin: 3rem 20rem;
+    margin: 15rem 20rem;
   }
 
   .table__body-item {
@@ -722,40 +722,81 @@ input[type="number"]::-webkit-outer-spin-button {
   text-transform: uppercase;
   letter-spacing: 2px;
   font-size: 5rem;
+  margin-top: 7rem;
 }
 
+.main-header-text {
+  text-align: center;
+  margin-bottom: 3rem;
+}
 .main-header-text h1 {
   display: inline-block;
-  text-transform: capitalize;
+  text-transform: uppercase;
   font-weight: 100;
   line-height: 45px;
-  font-size: 6.4rem;
-  letter-spacing: -0.005em;
+  font-size: 7.4rem;
 }
 
 .main-header-text span {
   font-weight: 800;
-  font-size: 6rem;
+  font-size: 7.4rem;
   text-transform: uppercase;
 }
 .main-header-text h2 {
   font-size: 2.4rem;
-  font-weight: 100;
-  line-height: 1.5;
-  letter-spacing: 0.005em;
+  font-weight: 300;
+  margin-bottom: 4rem;
 }
 
 .main-container {
-  margin: 0 5%;
+  margin: 0 4%;
+}
+
+@media screen and (min-width: 768px) {
+  .main-container {
+    padding-left: 5rem;
+  }
 }
 
 .main-header {
-  margin-bottom: 8rem;
+  background: #151016;
+  margin-bottom: 2rem;
+
+  margin-top: 53px;
+  padding-top: 6rem;
+  padding-bottom: 2rem;
+}
+
+.main-header-image {
+  max-width: 610px;
+}
+.main-header-image img {
+  width: 100%;
+}
+
+@media screen and (min-width: 450px) {
+  .main-header-image img {
+    display: block;
+  }
+}
+@media screen and (min-width: 768px) {
+  .main-header-image img {
+    margin-top: 3rem;
+  }
+  .main-header-text {
+    text-align: left;
+  }
+}
+
+@media screen and (min-width: 1250px) {
+  .main-header-text {
+    margin-top: 5rem;
+  }
 }
 
 .main-features {
-  background: #5d515130;
-  border-radius: 15px;
+  /* background: #5d515130;
+  border-radius: 15px; */
   padding: 2rem;
 }
 .main-features h2 {
@@ -780,7 +821,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .main-features-list-item p {
-  font-weight: 100;
+  font-weight: 300;
   font-size: 2rem;
   margin: 0;
 }
@@ -800,7 +841,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .main-howitworks-list-item p {
-  font-weight: 100;
+  font-weight: 300;
   font-size: 2rem;
   margin: 0;
 }
@@ -810,4 +851,19 @@ input[type="number"]::-webkit-outer-spin-button {
   border-radius: 15px;
   padding: 2rem;
   margin-top: 4rem;
+}
+
+.hero-grid {
+  display: grid;
+  justify-items: center;
+}
+
+@media screen and (min-width: 768px) {
+  .hero-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.block--skewed-left {
+  clip-path: polygon(0 0, 100% 0, 100% 95%, 0 100%);
 }

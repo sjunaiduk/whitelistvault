@@ -85,7 +85,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
         {address ? (
           <>
             <div className="table__body">
-              {sales ? (
+              {sales?.length ? (
                 sales.map((sale, index) => (
                   <ul
                     className={
