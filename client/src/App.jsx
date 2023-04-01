@@ -60,7 +60,7 @@ function App() {
                 />
               )}
 
-              <Route path="/" element={<Home isUserSeller={seller} />} />
+              <Route path="*" element={<Home isUserSeller={seller} />} />
             </Routes>
           </>
         ) : (
