@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useAccount } from "wagmi";
+import { Footer } from "./components/Footer";
 import { Home } from "./components/Home";
 import { NavBar } from "./components/Navbar";
 import {
@@ -59,6 +60,7 @@ function App() {
           <Home isUserSeller={seller} />
         )}
       </>
+      <Footer />
     </div>
   );
 }

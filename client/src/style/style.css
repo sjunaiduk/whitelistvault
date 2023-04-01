@@ -607,7 +607,7 @@ body {
   }
 
   .table {
-    margin: 15rem 20rem;
+    margin: 8rem 20rem;
   }
 
   .table__body-item {
@@ -732,7 +732,7 @@ input[type="number"]::-webkit-outer-spin-button {
   text-transform: uppercase;
   letter-spacing: 2px;
   font-size: 5rem;
-  margin-top: 7rem;
+  margin-top: 12rem;
 }
 
 .main-header-text {
@@ -882,6 +882,7 @@ input[type="number"]::-webkit-outer-spin-button {
 .hero-grid {
   display: grid;
   justify-items: center;
+  grid-gap: 2rem;
 }
 
 @media screen and (min-width: 768px) {
@@ -892,4 +893,103 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .block--skewed-left {
   clip-path: polygon(0 0, 100% 0, 100% 95%, 0 100%);
+}
+
+/* Footer */
+
+/**
+    <footer className="footer">
+      <div className="footer__container">
+        <div className="footer__logo">
+          <span>Whitelist Vault</span>
+          <i className="logo"></i>
+        </div>
+        <div className="footer__links">
+          <ul className="footer__list">
+            <li className="footer__item">
+              <a href="#" className="footer__link">
+                About
+              </a>
+            </li>
+            <li className="footer__item">
+              <a href="#" className="footer__link">
+                Contact
+              </a>
+            </li>
+            <li className="footer__item">
+              <a href="#" className="footer__link">
+                Terms
+              </a>
+            </li>
+            <li className="footer__item">
+              <a href="#" className="footer__link">
+                Privacy
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+
+
+*/
+
+.footer {
+  padding: 2rem;
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 300;
+  position: relative;
+  bottom: 0;
+}
+
+.footer__container {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: 2rem;
+}
+
+.footer__logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.4rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.footer__logo i {
+  margin-left: 1rem;
+  font-size: 2.4rem;
+}
+
+.footer__links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer__list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer__item {
+  margin-right: 2rem;
+}
+
+.footer__link {
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+@media screen and (min-width: 768px) {
+  .footer__container {
+    grid-template-columns: 1fr 1fr;
+  }
 }

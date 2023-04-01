@@ -55,7 +55,7 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
                 </li>
                 <li className="navbar-new__item">
                   <Link to="/sales" className="navbar__link">
-                    Seller Sales
+                    Sales
                   </Link>
                 </li>
               </>
@@ -68,7 +68,7 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
                 </li>
                 <li className="navbar-new__item">
                   <Link to="/sales" className="navbar__link">
-                    Buyer Sales
+                    Purchases
                   </Link>
                 </li>
               </>

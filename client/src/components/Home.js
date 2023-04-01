@@ -138,11 +138,6 @@ export const Home = ({ isUserSeller }) => {
               </li>
             </ul>
           </div>
-          <p>
-            By using WhitelistHaven, you can buy and sell presale tokens with
-            peace of mind knowing that your transaction is secure and protected
-            by our escrow service.
-          </p>
         </div>
       </section>
     </>

@@ -19,7 +19,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <BrowserRouter>
     <WagmiConfig client={client}>
-      <ConnectKitProvider>
+      <ConnectKitProvider theme="midnight">
         <App />
       </ConnectKitProvider>
     </WagmiConfig>

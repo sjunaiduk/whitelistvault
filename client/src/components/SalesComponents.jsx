@@ -73,6 +73,11 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
   };
   return (
     <div>
+      {isSeller ? (
+        <h2 className="title">Your Sales</h2>
+      ) : (
+        <h2 className="title">Your Purchases</h2>
+      )}
       <div className="table" id="dim">
         <ul className="table__header">
           <li className="table__header-item optional">Address</li>
@@ -215,6 +220,7 @@ export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
   };
   return (
     <div>
+      <h1 className="title">Open Book Sales</h1>
       <div className="table" id="dim">
         <ul className="table__header">
           <li className="table__header-item optional">Address</li>
