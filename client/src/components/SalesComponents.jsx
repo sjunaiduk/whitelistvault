@@ -25,7 +25,13 @@ struct SaleInfo {
     uint256 price;
 }
  */
+const truncateRegex = /^(0x[a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/;
 
+const truncateEthAddress = function (address) {
+  var match = address.match(truncateRegex);
+  if (!match) return address;
+  return match[1] + "\u2026" + match[2];
+};
 export const ViewSales = ({ usersAddress, isSeller = true }) => {
   const { chain } = useNetwork();
   const {
@@ -80,8 +86,8 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
       )}
       <div className="table" id="dim">
         <ul className="table__header">
-          <li className="table__header-item optional">Address</li>
-          <li className="table__header-item optional">Platform</li>
+          <li className="table__header-item optional">Presale</li>
+          <li className="table__header-item optional">Seller</li>
           <li className="table__header-item">Price</li>
           <li className="table__header-item">Status</li>
           <li className="table__header-item optional">Action</li>
@@ -106,10 +112,10 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
                       onClick={() => handleRowClick(index)}
                     >
                       <li className="table__body-item table-address optional">
-                        {sale.buyerAddress}
+                        {truncateEthAddress(sale.presaleAddress)}
                       </li>
                       <li className="table__body-item optional">
-                        {sale.presalePlatform}
+                        {truncateEthAddress(sale.sellerAddress)}
                       </li>
                       <li className="table__body-item">
                         {(sale.price * 10 ** -18).toFixed(2)} BNB
@@ -223,8 +229,8 @@ export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
       <h1 className="title">Open Book Sales</h1>
       <div className="table" id="dim">
         <ul className="table__header">
-          <li className="table__header-item optional">Address</li>
-          <li className="table__header-item optional">Platform</li>
+          <li className="table__header-item optional">Presale</li>
+          <li className="table__header-item optional">Seller</li>
           <li className="table__header-item">Price</li>
           <li className="table__header-item">Status</li>
           <li className="table__header-item optional">Action</li>
@@ -249,10 +255,10 @@ export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
                       onClick={() => handleRowClick(index)}
                     >
                       <li className="table__body-item table-address optional">
-                        {sale.buyerAddress}
+                        {truncateEthAddress(sale.presaleAddress)}
                       </li>
                       <li className="table__body-item optional">
-                        {sale.presalePlatform}
+                        {truncateEthAddress(sale.sellerAddress)}
                       </li>
                       <li className="table__body-item">
                         {(sale.price * 10 ** -18).toFixed(2)} BNB
@@ -581,11 +587,10 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                       style={
                         isCompletingSale || isCompleteSaleConfigError
                           ? {
-                              marginRight: "10px",
                               cursor: "not-allowed",
                               opacity: "0.5",
                             }
-                          : { marginRight: "10px" }
+                          : { opacity: "1" }
                       }
                     >
                       {isCompletingSale ? "Completing..." : "Complete"}
@@ -609,12 +614,12 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                     >
                       {cancelTxLoading ? "Cancelling..." : "Cancel"}
                     </button>
-                    {isCompleteSaleConfigError && (
-                      <span className="card__error">
-                        Wait until buyers wallet is added to presale
-                      </span>
-                    )}
                   </div>
+                  {isCompleteSaleConfigError && (
+                    <span className="card__error">
+                      Wait until buyers wallet is added to presale
+                    </span>
+                  )}
                 </div>
               </>
             )
@@ -642,19 +647,19 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                   >
                     {cancelTxLoading ? "Cancelling..." : "Cancel"}
                   </button>
-                  {isCancelSaleConfigError &&
-                    (cancelSaleConfigError?.error?.data?.message.includes(
-                      "wallet has already been added"
-                    ) ? (
-                      <span className="card__error">
-                        Your wallet has already been added!
-                      </span>
-                    ) : (
-                      <span className="card__error">
-                        Wait until presale starts
-                      </span>
-                    ))}
                 </div>
+                {isCancelSaleConfigError &&
+                  (cancelSaleConfigError?.error?.data?.message.includes(
+                    "wallet has already been added"
+                  ) ? (
+                    <span className="card__error">
+                      Your wallet has already been added!
+                    </span>
+                  ) : (
+                    <span className="card__error">
+                      Wait until presale starts
+                    </span>
+                  ))}
               </div>
             </>
           )
