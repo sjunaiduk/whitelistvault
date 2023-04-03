@@ -9,6 +9,7 @@ import {
   useWaitForTransaction,
 } from "wagmi";
 
+import { message } from "antd";
 import { ethers } from "ethers";
 import escrowAbi from "../contracts/OpenBookV2.json";
 /*
@@ -26,6 +27,13 @@ struct SaleInfo {
 }
  */
 const truncateRegex = /^(0x[a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/;
+
+const showSuccess = (msg) => {
+  message.success({
+    content: msg,
+    duration: 3,
+  });
+};
 
 const truncateEthAddress = function (address) {
   var match = address.match(truncateRegex);
@@ -356,6 +364,8 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
           "Accept sale success, refetching cancel sale config. this sale card: ",
           sale
         );
+        showSuccess("Sale accepted!");
+
         refetchCancelSaleConfig();
         refetchSales();
       },
@@ -472,6 +482,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
     useWaitForTransaction({
       hash: cancelSaleTxData?.hash,
       onSuccess: () => {
+        showSuccess("Sale cancelled!");
         refetchSales();
       },
     });
@@ -483,13 +494,14 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
 
     try {
       await completeSaleAsync();
+      showSuccess("Sale completed!");
     } catch (e) {
       console.log(e);
     }
   };
 
   const cancelSale = async () => {
-    await cancelSaleAsync();
+    cancelSaleAsync();
   };
 
   return (
@@ -803,6 +815,7 @@ export const CreateSale = () => {
       hash: createSaleResult?.hash,
       onSuccess: () => {
         console.log("Create sale transaction success");
+        showSuccess("Sale created successfully");
         refetch();
       },
       onError: (error) => {
