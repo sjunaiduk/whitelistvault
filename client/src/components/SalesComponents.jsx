@@ -88,9 +88,21 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
   return (
     <div className="content">
       {isSeller ? (
-        <h2 className="title">Your Sales</h2>
+        <>
+          <div className="role-header">
+            <h1 className="role-title">YOU ARE A SELLER</h1>
+            <div className="seller-icon"></div>
+          </div>
+          <h2 className="title">Your Sales</h2>
+        </>
       ) : (
-        <h2 className="title">Your Purchases</h2>
+        <>
+          <div className="role-header">
+            <h1 className="role-title">YOU ARE A BUYER</h1>
+            <div className="buyer-icon"></div>
+          </div>
+          <h2 className="title">Your Purchases</h2>
+        </>
       )}
       <div className="table" id="dim">
         <ul className="table__header">
@@ -234,6 +246,10 @@ export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
   };
   return (
     <div className="content">
+      <div className="role-header">
+        <h1 className="role-title">YOU ARE A BUYER</h1>
+        <div className="buyer-icon"></div>
+      </div>
       <h1 className="title">Open Book Sales</h1>
       <div className="table" id="dim">
         <ul className="table__header">
@@ -827,6 +843,11 @@ export const CreateSale = () => {
     <div className="content">
       {address ? (
         <>
+          <div className="role-header">
+            <h1 className="role-title">YOU ARE A SELLER</h1>
+            <div className="seller-icon"></div>
+          </div>
+
           <h1 className="title">Create Sale</h1>
 
           <form

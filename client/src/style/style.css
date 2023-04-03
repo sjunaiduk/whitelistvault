@@ -765,7 +765,7 @@ input[type="number"]::-webkit-outer-spin-button {
   text-transform: uppercase;
   letter-spacing: 2px;
   font-size: 5rem;
-  margin-top: 12rem;
+  margin: 0;
 }
 
 .main-header-text {
@@ -1044,4 +1044,37 @@ input[type="number"]::-webkit-outer-spin-button {
 /* For footer alignment purposes */
 .content {
   flex-grow: 1;
+}
+
+/* Logos */
+
+.seller-icon {
+  background: url("../images/seller.svg") no-repeat center center;
+  width: 80px;
+  height: 80px;
+
+  background-size: contain;
+}
+
+.buyer-icon {
+  background: url("../images/buyer.svg") no-repeat center center;
+  width: 80px;
+  height: 80px;
+
+  background-size: contain;
+}
+.role-title {
+  font-size: 2.4rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+.role-header {
+  gap: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-block: 9rem 4rem;
 }
