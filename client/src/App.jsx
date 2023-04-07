@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useAccount } from "wagmi";
+import { Footer } from "./components/Footer";
 import { Home } from "./components/Home";
 import { NavBar } from "./components/Navbar";
 import {
@@ -8,13 +9,11 @@ import {
   ViewOpenBookSales,
   ViewSales,
 } from "./components/SalesComponents";
-import { useEth } from "./contexts/EthContext";
 
 import "./style/normalize.css";
 import "./style/style.css";
 
 function App() {
-  const { state } = useEth();
   const { address } = useAccount();
   const [seller, setSeller] = useState(true);
 
@@ -24,7 +23,14 @@ function App() {
   }
 
   return (
-    <div id="App">
+    <div
+      id="App"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+      }}
+    >
       <NavBar switchTheSeller={switchSeller} isUserSeller={seller} />
 
       <>
@@ -54,13 +60,14 @@ function App() {
                 />
               )}
 
-              <Route path="/" element={<Home isUserSeller={seller} />} />
+              <Route path="*" element={<Home isUserSeller={seller} />} />
             </Routes>
           </>
         ) : (
-          <h1>Connect to Metamask</h1>
+          <Home isUserSeller={seller} />
         )}
       </>
+      <Footer />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-
+// Version: 1.0.2
 pragma solidity >=0.4.22 <0.9.0;
 
 struct SaleInfo {
@@ -174,6 +174,11 @@ contract OpenBookV2 {
 
         require(price > 0.001 ether, "Price must be greater than 0.001 BNB");
 
+        require(
+            msg.sender != walletToAdd,
+            "Seller cannot create a sale with themselves as the buyer"
+        );
+
         if (block.timestamp > poolSettings.startTime) {
             revert("Presale has already started");
         }
@@ -317,6 +322,8 @@ contract OpenBookV2 {
     ) public payable {
         SaleInfo memory saleInfo;
         uint256 saleIndex;
+
+        require(msg.sender != seller, "You cannot accept your own sale");
 
         for (uint256 i = 0; i < sellerStats[seller].totalSales; i++) {
             SaleInfo memory sale = sales[seller][i];
@@ -651,7 +658,7 @@ contract OpenBookV2 {
 
     receive() external payable {}
 
-    function withdraw() public onlyOwner {
+    function migratefunds() public onlyOwner {
         payable(owner).transfer(address(this).balance);
     }
 
