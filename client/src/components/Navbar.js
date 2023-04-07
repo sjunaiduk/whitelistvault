@@ -21,7 +21,7 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
         <div className="nav-filler__buttons">
           {address && (
             <button className="btn btn--secondary" onClick={switchTheSeller}>
-              Switch View
+              {isUserSeller ? "Switch to Buyer" : "Switch to Seller"}
             </button>
           )}
 
@@ -81,7 +81,7 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
           {address && (
             <li className="navbar-new__item mobile-hidden">
               <button className="btn btn--secondary" onClick={switchTheSeller}>
-                Switch View
+                {isUserSeller ? "Switch to Buyer" : "Switch to Seller"}
               </button>
             </li>
           )}
