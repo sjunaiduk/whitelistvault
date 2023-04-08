@@ -13,6 +13,7 @@ import { publicProvider } from "wagmi/providers/public";
 
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
+import { InjectedConnector } from "wagmi/connectors/injected";
 
 const { chains, provider, webSocketProvider } = configureChains(
   [bscTestnet],
@@ -20,12 +21,21 @@ const { chains, provider, webSocketProvider } = configureChains(
 );
 
 const client = createClient({
+  autoConnect: true,
   connectors: [
     new WalletConnectConnector({
       chains,
       options: {
         projectId: "80f3b920a519677627fee8796a5dc6a8",
         showQrModal: false,
+      },
+    }),
+    new InjectedConnector({
+      chains,
+
+      options: {
+        name: "MetaMask",
+        iconUrl: "https://metamask.io/images/favicon-32x32.png",
       },
     }),
   ],
