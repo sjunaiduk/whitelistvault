@@ -5,15 +5,39 @@ import "./style/style.css";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
-import { WagmiConfig, createClient } from "wagmi";
+import { WagmiConfig, createClient, configureChains } from "wagmi";
 import { ConnectKitProvider, getDefaultClient } from "connectkit";
 import { bscTestnet } from "wagmi/chains";
 
-const client = createClient(
-  getDefaultClient({
-    chains: [bscTestnet],
-  })
+import { publicProvider } from "wagmi/providers/public";
+
+import { MetaMaskConnector } from "wagmi/connectors/metaMask";
+import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
+
+const { chains, provider, webSocketProvider } = configureChains(
+  [bscTestnet],
+  [publicProvider()]
 );
+
+const client = createClient({
+  connectors: [
+    new WalletConnectConnector({
+      chains,
+      options: {
+        projectId: "80f3b920a519677627fee8796a5dc6a8",
+        showQrModal: false,
+      },
+    }),
+  ],
+  provider,
+  webSocketProvider,
+});
+
+// const client = createClient(
+//   getDefaultClient({
+//     chains: [bscTestnet],
+//   })
+// );
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
