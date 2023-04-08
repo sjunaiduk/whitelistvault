@@ -12,11 +12,11 @@ import {
 
 import "./style/normalize.css";
 import "./style/style.css";
+import { useWeb3Modal } from "@web3modal/react";
 
 function App() {
   const { address } = useAccount();
   const [seller, setSeller] = useState(true);
-
   function switchSeller() {
     console.log("switching seller");
     setSeller(!seller);
@@ -29,6 +29,7 @@ function App() {
         display: "flex",
         flexDirection: "column",
         minHeight: "100vh",
+        width: "100vw",
       }}
     >
       <NavBar switchTheSeller={switchSeller} isUserSeller={seller} />

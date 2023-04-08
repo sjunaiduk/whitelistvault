@@ -75,6 +75,11 @@ root.render(
     <WagmiConfig client={wagmiClient}>
       <App />
     </WagmiConfig>
-    <Web3Modal projectId={projectId} ethereumClient={ethereumClient} />
+    <Web3Modal
+      projectId={projectId}
+      ethereumClient={ethereumClient}
+      themeMode="dark"
+      defaultChain={bscTestnet}
+    />
   </BrowserRouter>
 );
