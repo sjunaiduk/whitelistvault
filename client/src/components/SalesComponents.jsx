@@ -49,7 +49,7 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
     refetch,
   } = useContractRead({
     abi: escrowAbi.abi,
-    address: escrowAbi.networks[chain.id].address,
+    address: escrowAbi.networks[chain.id]?.address,
     functionName: isSeller ? "getSalesForSeller" : "getSalesForBuyer",
     args: [usersAddress],
     onSuccess: (data) => {
@@ -209,7 +209,7 @@ export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
     refetch,
   } = useContractRead({
     abi: escrowAbi.abi,
-    address: escrowAbi.networks[chain.id].address,
+    address: escrowAbi.networks[chain.id]?.address,
     functionName: "getPendingOpenBookSales",
     onSuccess: (data) => {
       console.log("data", data);
@@ -355,7 +355,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   const { chain } = useNetwork();
 
   const { config: acceptSaleConfig } = usePrepareContractWrite({
-    address: escrowAbi.networks[chain.id].address,
+    address: escrowAbi.networks[chain.id]?.address,
     abi: escrowAbi.abi,
     functionName: "acceptSaleAsBuyer",
     args: [sale.sellerAddress, sale.presaleAddress, sale.price],
@@ -414,7 +414,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
     refetch: refetchCompleteSaleConfig,
     isError: isCompleteSaleConfigError,
   } = usePrepareContractWrite({
-    address: escrowAbi.networks[chain.id].address,
+    address: escrowAbi.networks[chain.id]?.address,
     abi: escrowAbi.abi,
     functionName: "completeSale",
     args: [sale.sellerAddress, sale.presaleAddress, sale.buyerAddress],
@@ -468,7 +468,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
     error: cancelSaleConfigError,
     refetch: refetchCancelSaleConfig,
   } = usePrepareContractWrite({
-    address: escrowAbi.networks[chain.id].address,
+    address: escrowAbi.networks[chain.id]?.address,
     abi: escrowAbi.abi,
     functionName: "cancelSale",
     args: [sale.presaleAddress, sale.buyerAddress, sale.sellerAddress],
@@ -783,7 +783,7 @@ export const CreateSale = () => {
     isError: createSalePrepareTxFailed,
     refetch,
   } = usePrepareContractWrite({
-    address: escrowAbi.networks[chain.id].address,
+    address: escrowAbi.networks[chain.id]?.address,
     functionName: "createSale",
     abi: escrowAbi.abi,
     args: !isOpenBook
