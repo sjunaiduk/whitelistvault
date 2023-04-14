@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export const Footer = () => {
   return (
     <footer className="footer">
@@ -9,23 +11,14 @@ export const Footer = () => {
         <div className="footer__links">
           <ul className="footer__list">
             <li className="footer__item">
-              <a href="#" className="footer__link">
-                About
-              </a>
+              <Link to="/" className="footer__link">
+                Home
+              </Link>
             </li>
+
             <li className="footer__item">
-              <a href="#" className="footer__link">
-                Contact
-              </a>
-            </li>
-            <li className="footer__item">
-              <a href="#" className="footer__link">
-                Terms
-              </a>
-            </li>
-            <li className="footer__item">
-              <a href="#" className="footer__link">
-                Privacy
+              <a href="https://t.me/whitelistvault" className="footer__link">
+                Telegram
               </a>
             </li>
           </ul>
