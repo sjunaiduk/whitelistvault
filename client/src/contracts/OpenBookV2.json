@@ -1,0 +1,638 @@
+{
+  "contractName": "OpenBookV2",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "buyerStats",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "totalSalesBuyerWasPartOf",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [],
+      "name": "feeAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [],
+      "name": "feePercentage",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [],
+      "name": "feesEnabled",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "sellerStats",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "totalSales",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalSalesPending",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalSalesCancelled",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalSalesSuccessful",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive",
+      "payable": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newFeeAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setFeeAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "newFeePercent",
+          "type": "uint8"
+        }
+      ],
+      "name": "setFeePercent",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "newFeesEnabled",
+          "type": "bool"
+        }
+      ],
+      "name": "setFeesEnabled",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        }
+      ],
+      "name": "getSalesForBuyer",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "creationTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "buyerAcceptedTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "sellerAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "presaleAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "buyerAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "buyerAcceptedSaleAndSentBnbToContract",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "cancelled",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "walletAdded",
+              "type": "bool"
+            },
+            {
+              "internalType": "string",
+              "name": "presalePlatform",
+              "type": "string"
+            },
+            {
+              "internalType": "bool",
+              "name": "moneySentToSellerByContract",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "price",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "presaleStartTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "presaleEndTime",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct SaleInfo[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "presale",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "walletToAdd",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        }
+      ],
+      "name": "createSale",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPendingOpenBookSales",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "creationTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "buyerAcceptedTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "sellerAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "presaleAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "buyerAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "buyerAcceptedSaleAndSentBnbToContract",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "cancelled",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "walletAdded",
+              "type": "bool"
+            },
+            {
+              "internalType": "string",
+              "name": "presalePlatform",
+              "type": "string"
+            },
+            {
+              "internalType": "bool",
+              "name": "moneySentToSellerByContract",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "price",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "presaleStartTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "presaleEndTime",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct SaleInfo[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "seller",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "presale",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        }
+      ],
+      "name": "acceptSaleAsBuyer",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function",
+      "payable": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "presale",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "walletToAdd",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "sellersAddress",
+          "type": "address"
+        }
+      ],
+      "name": "cancelSale",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "seller",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "presale",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "walletToAdd",
+          "type": "address"
+        }
+      ],
+      "name": "completeSale",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "seller",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "presale",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "walletToAdd",
+          "type": "address"
+        }
+      ],
+      "name": "getSaleInfo",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "creationTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "buyerAcceptedTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "sellerAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "presaleAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "buyerAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "buyerAcceptedSaleAndSentBnbToContract",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "cancelled",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "walletAdded",
+              "type": "bool"
+            },
+            {
+              "internalType": "string",
+              "name": "presalePlatform",
+              "type": "string"
+            },
+            {
+              "internalType": "bool",
+              "name": "moneySentToSellerByContract",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "price",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "presaleStartTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "presaleEndTime",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct SaleInfo[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "seller",
+          "type": "address"
+        }
+      ],
+      "name": "getSalesForSeller",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "creationTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "buyerAcceptedTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "sellerAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "presaleAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "buyerAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "buyerAcceptedSaleAndSentBnbToContract",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "cancelled",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "walletAdded",
+              "type": "bool"
+            },
+            {
+              "internalType": "string",
+              "name": "presalePlatform",
+              "type": "string"
+            },
+            {
+              "internalType": "bool",
+              "name": "moneySentToSellerByContract",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "price",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "presaleStartTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "presaleEndTime",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct SaleInfo[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [],
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_owner",
+          "type": "address"
+        }
+      ],
+      "name": "setOwner",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "networks": {
+    "97": {
+      "events": {},
+      "links": {},
+      "address": "0x2126e6BeF74b4dB2D1F63dCBa4959b51389F4603",
+      "transactionHash": "0x05aac002fa9a664c5aafe300c4593b898e6b37553208227b485bea061df9c7dd"
+    }
+  }
+}
