@@ -1,10 +1,13 @@
-import { ConnectKitButton } from "connectkit";
+import { Web3Button, useWeb3Modal } from "@web3modal/react";
+
 import { useAccount, useDisconnect } from "wagmi";
+import { bscTestnet } from "wagmi/chains";
 
 export const ConnectWallet = () => {
   const { disconnect } = useDisconnect();
   const { address } = useAccount();
-
+  const { open, setDefaultChain } = useWeb3Modal();
+  setDefaultChain(bscTestnet);
   return (
     <>
       {address ? (
@@ -19,30 +22,11 @@ export const ConnectWallet = () => {
         </>
       ) : (
         <>
-          <ConnectKitButton.Custom>
-            {({
-              isConnected,
-              isConnecting,
-              show,
-              hide,
-              address,
-              ensName,
-              chain,
-            }) => {
-              return (
-                <button onClick={show} className="btn btn--primary">
-                  Connect
-                </button>
-              );
-            }}
-          </ConnectKitButton.Custom>
+          <button onClick={open} className="btn btn--primary">
+            Connect
+          </button>
         </>
       )}
     </>
   );
 };
-/**
- *  background-image: linear-gradient(to right, #fe4bc6, #f30baa 40%);
-  background-position: right;
-  background-size: 300%;
- */

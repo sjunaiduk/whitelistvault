@@ -2,9 +2,11 @@ import { ConnectKitButton } from "connectkit";
 import heroImage from "../images/hero-image.png";
 import { ConnectWallet } from "./ConnectWallet";
 import { useAccount, useDisconnect } from "wagmi";
+import { Web3Button, useWeb3Modal } from "@web3modal/react";
 
 export const Home = ({ isUserSeller }) => {
   const { disconnect } = useDisconnect();
+  const { open } = useWeb3Modal();
   const { address } = useAccount();
   return (
     <div className="content">
@@ -30,26 +32,9 @@ export const Home = ({ isUserSeller }) => {
               </>
             ) : (
               <>
-                <ConnectKitButton.Custom>
-                  {({
-                    isConnected,
-                    isConnecting,
-                    show,
-                    hide,
-                    address,
-                    ensName,
-                    chain,
-                  }) => {
-                    return (
-                      <button
-                        onClick={show}
-                        className="btn btn--primary btn--large"
-                      >
-                        Connect
-                      </button>
-                    );
-                  }}
-                </ConnectKitButton.Custom>
+                <button onClick={open} className="btn btn--primary btn--large">
+                  Connect
+                </button>
               </>
             )}
           </div>
