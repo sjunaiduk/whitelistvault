@@ -170,12 +170,6 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
                       // refetchSales={fetchAndSetSales}
                       sale={sale}
                       isSeller={isSeller}
-                      setRowSuccess={() => {
-                        updateSpecificSaleByIndex(index, "success");
-                      }}
-                      setRowCancelled={() => {
-                        updateSpecificSaleByIndex(index, "cancelled");
-                      }}
                       refetchSales={refetch}
                     />
                   </ul>
@@ -263,70 +257,67 @@ export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
         {address ? (
           <>
             <div className="table__body">
-              {sales?.length ? (
-                sales.map((sale, index) => (
-                  <ul
-                    className={
-                      index === expandedSaleIndex
-                        ? " table__row row-action--expanded"
-                        : "table__row action-hidden "
-                    }
-                    key={index}
-                  >
-                    <div
-                      className="table__row-details"
-                      key={sale}
-                      onClick={() => handleRowClick(index)}
+              {sales.filter((sale) => address !== sale.sellerAddress)
+                ?.length ? (
+                sales
+                  .filter((sale) => address !== sale.sellerAddress)
+                  .map((sale, index) => (
+                    <ul
+                      className={
+                        index === expandedSaleIndex
+                          ? " table__row row-action--expanded"
+                          : "table__row action-hidden "
+                      }
+                      key={index}
                     >
-                      <li className="table__body-item table-address optional">
-                        {truncateEthAddress(sale.presaleAddress)}
-                      </li>
-                      <li className="table__body-item optional">
-                        {truncateEthAddress(sale.sellerAddress)}
-                      </li>
-                      <li className="table__body-item">
-                        {(sale.price * 10 ** -18).toFixed(2)} BNB
-                      </li>
-                      {!sale.cancelled ? (
-                        sale.buyerAcceptedSaleAndSentBnbToContract ? (
-                          sale.moneySentToSellerByContract ? (
-                            <li className="table__body-item action tick">
-                              Success
-                            </li>
+                      <div
+                        className="table__row-details"
+                        key={sale}
+                        onClick={() => handleRowClick(index)}
+                      >
+                        <li className="table__body-item table-address optional">
+                          {truncateEthAddress(sale.presaleAddress)}
+                        </li>
+                        <li className="table__body-item optional">
+                          {truncateEthAddress(sale.sellerAddress)}
+                        </li>
+                        <li className="table__body-item">
+                          {(sale.price * 10 ** -18).toFixed(2)} BNB
+                        </li>
+                        {!sale.cancelled ? (
+                          sale.buyerAcceptedSaleAndSentBnbToContract ? (
+                            sale.moneySentToSellerByContract ? (
+                              <li className="table__body-item action tick">
+                                Success
+                              </li>
+                            ) : (
+                              <li className="table__body-item action ">
+                                Waiting For Seller
+                              </li>
+                            )
                           ) : (
                             <li className="table__body-item action ">
-                              Waiting For Seller
+                              Waiting For Buyer
                             </li>
                           )
                         ) : (
-                          <li className="table__body-item action ">
-                            Waiting For Buyer
+                          <li className="table__body-item action cross">
+                            Cancelled
                           </li>
-                        )
-                      ) : (
-                        <li className="table__body-item action cross">
-                          Cancelled
-                        </li>
-                      )}
+                        )}
 
-                      <li className="show-row-action">
-                        <i className="burger"> </i>
-                      </li>
-                    </div>
-                    <SalesCard
-                      // refetchSales={fetchAndSetSales}
-                      sale={sale}
-                      isSeller={isSeller}
-                      setRowSuccess={() => {
-                        updateSpecificSaleByIndex(index, "success");
-                      }}
-                      setRowCancelled={() => {
-                        updateSpecificSaleByIndex(index, "cancelled");
-                      }}
-                      refetchSales={refetch}
-                    />
-                  </ul>
-                ))
+                        <li className="show-row-action">
+                          <i className="burger"> </i>
+                        </li>
+                      </div>
+                      <SalesCard
+                        // refetchSales={fetchAndSetSales}
+                        sale={sale}
+                        isSeller={isSeller}
+                        refetchSales={refetch}
+                      />
+                    </ul>
+                  ))
               ) : (
                 <h3
                   style={{
