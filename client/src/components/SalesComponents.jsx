@@ -35,6 +35,42 @@ const showSuccess = (msg) => {
   });
 };
 
+const sortFunctionForSalesByStatus = (saleA, saleB) => {
+  if (saleA.cancelled && saleB.cancelled) {
+    return saleA.creationTimestamp - saleB.creationTimestamp;
+  } else if (saleA.cancelled) {
+    return 1;
+  } else if (saleB.cancelled) {
+    return -1;
+  } else if (saleA.walletAdded && saleB.walletAdded) {
+    return saleA.creationTimestamp - saleB.creationTimestamp;
+  } else if (saleA.walletAdded) {
+    return 1;
+  } else if (saleB.walletAdded) {
+    return -1;
+  } else if (
+    saleA.buyerAcceptedSaleAndSentBnbToContract &&
+    saleB.buyerAcceptedSaleAndSentBnbToContract
+  ) {
+    return saleA.creationTimestamp - saleB.creationTimestamp;
+  } else if (saleA.buyerAcceptedSaleAndSentBnbToContract) {
+    return -1;
+  } else if (saleB.buyerAcceptedSaleAndSentBnbToContract) {
+    return 1;
+  } else if (
+    saleA.moneySentToSellerByContract &&
+    saleB.moneySentToSellerByContract
+  ) {
+    return saleA.creationTimestamp - saleB.creationTimestamp;
+  } else if (saleA.moneySentToSellerByContract) {
+    return -1;
+  } else if (saleB.moneySentToSellerByContract) {
+    return 1;
+  } else {
+    return (saleA.creationTimestamp - saleB.creationTimestamp) * -1;
+  }
+};
+
 const truncateEthAddress = function (address) {
   var match = address.match(truncateRegex);
   if (!match) return address;
@@ -42,12 +78,7 @@ const truncateEthAddress = function (address) {
 };
 export const ViewSales = ({ usersAddress, isSeller = true }) => {
   const { chain } = useNetwork();
-  const {
-    data: sales,
-    isError,
-    isLoading,
-    refetch,
-  } = useContractRead({
+  const { data: sales, refetch } = useContractRead({
     abi: escrowAbi.abi,
     address: escrowAbi.networks[chain.id]?.address,
     functionName: isSeller ? "getSalesForSeller" : "getSalesForBuyer",
@@ -58,22 +89,6 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
   });
 
   const { address } = useAccount();
-
-  function updateSpecificSaleByIndex(index, outcome) {
-    setSales((prevSales) => {
-      return prevSales.map((sale, i) => {
-        if (i === index) {
-          if (outcome === "cancelled") {
-            return { ...sale, cancelled: true };
-          } else {
-            return { ...sale, moneySentToSellerByContract: true };
-          }
-        } else {
-          return sale;
-        }
-      });
-    });
-  }
 
   const [expandedSaleIndex, setExpandedSaleIndex] = useState(null);
 
@@ -117,150 +132,9 @@ export const ViewSales = ({ usersAddress, isSeller = true }) => {
           <>
             <div className="table__body">
               {sales?.length ? (
-                sales.map((sale, index) => (
-                  <ul
-                    className={
-                      index === expandedSaleIndex
-                        ? " table__row row-action--expanded"
-                        : "table__row action-hidden "
-                    }
-                    key={index}
-                  >
-                    <div
-                      className="table__row-details"
-                      key={sale}
-                      onClick={() => handleRowClick(index)}
-                    >
-                      <li className="table__body-item table-address optional">
-                        {truncateEthAddress(sale.presaleAddress)}
-                      </li>
-                      <li className="table__body-item optional">
-                        {truncateEthAddress(sale.sellerAddress)}
-                      </li>
-                      <li className="table__body-item">
-                        {(sale.price * 10 ** -18).toFixed(2)} BNB
-                      </li>
-                      {!sale.cancelled ? (
-                        sale.buyerAcceptedSaleAndSentBnbToContract ? (
-                          sale.moneySentToSellerByContract ? (
-                            <li className="table__body-item action tick">
-                              Success
-                            </li>
-                          ) : (
-                            <li className="table__body-item action ">
-                              Waiting For Seller
-                            </li>
-                          )
-                        ) : (
-                          <li className="table__body-item action ">
-                            Waiting For Buyer
-                          </li>
-                        )
-                      ) : (
-                        <li className="table__body-item action cross">
-                          Cancelled
-                        </li>
-                      )}
-
-                      <li className="show-row-action">
-                        <i className="burger"> </i>
-                      </li>
-                    </div>
-                    <SalesCard
-                      // refetchSales={fetchAndSetSales}
-                      sale={sale}
-                      isSeller={isSeller}
-                      refetchSales={refetch}
-                    />
-                  </ul>
-                ))
-              ) : (
-                <h3
-                  style={{
-                    textAlign: "center",
-                  }}
-                >
-                  No sales yet.
-                </h3>
-              )}
-              {/* <button onClick={fetchAndSetSales}>Get Sales</button> */}
-            </div>
-          </>
-        ) : (
-          <h3>You are not connected.</h3>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
-  const { chain } = useNetwork();
-  const {
-    data: sales,
-    isError,
-    isLoading,
-    refetch,
-  } = useContractRead({
-    abi: escrowAbi.abi,
-    address: escrowAbi.networks[chain.id]?.address,
-    functionName: "getPendingOpenBookSales",
-    onSuccess: (data) => {
-      console.log("data", data);
-    },
-  });
-
-  const { address } = useAccount();
-
-  function updateSpecificSaleByIndex(index, outcome) {
-    setSales((prevSales) => {
-      return prevSales.map((sale, i) => {
-        if (i === index) {
-          if (outcome === "cancelled") {
-            return { ...sale, cancelled: true };
-          } else {
-            return { ...sale, moneySentToSellerByContract: true };
-          }
-        } else {
-          return sale;
-        }
-      });
-    });
-  }
-
-  const [expandedSaleIndex, setExpandedSaleIndex] = useState(null);
-
-  const handleRowClick = (index) => {
-    if (index === expandedSaleIndex) {
-      setExpandedSaleIndex(null);
-      return;
-    } else {
-      setExpandedSaleIndex(index);
-    }
-  };
-  return (
-    <div className="content">
-      <div className="role-header">
-        <h1 className="role-title">YOU ARE A BUYER</h1>
-        <div className="buyer-icon"></div>
-      </div>
-      <h1 className="title">Open Book Sales</h1>
-      <div className="table" id="dim">
-        <ul className="table__header">
-          <li className="table__header-item optional">Presale</li>
-          <li className="table__header-item optional">Seller</li>
-          <li className="table__header-item">Price</li>
-          <li className="table__header-item">Status</li>
-          <li className="table__header-item optional">Action</li>
-        </ul>
-
-        {address ? (
-          <>
-            <div className="table__body">
-              {sales.filter((sale) => address !== sale.sellerAddress)
-                ?.length ? (
                 sales
-                  .filter((sale) => address !== sale.sellerAddress)
+                  .slice()
+                  .sort(sortFunctionForSalesByStatus)
                   .map((sale, index) => (
                     <ul
                       className={
@@ -318,6 +192,132 @@ export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
                       />
                     </ul>
                   ))
+              ) : (
+                <h3
+                  style={{
+                    textAlign: "center",
+                  }}
+                >
+                  No sales yet.
+                </h3>
+              )}
+              {/* <button onClick={fetchAndSetSales}>Get Sales</button> */}
+            </div>
+          </>
+        ) : (
+          <h3>You are not connected.</h3>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
+  const { chain } = useNetwork();
+  const {
+    data: sales,
+    isError,
+    isLoading,
+    refetch,
+  } = useContractRead({
+    abi: escrowAbi.abi,
+    address: escrowAbi.networks[chain.id]?.address,
+    functionName: "getPendingOpenBookSales",
+    onSuccess: (data) => {
+      console.log("data", data);
+    },
+  });
+
+  const { address } = useAccount();
+
+  const [expandedSaleIndex, setExpandedSaleIndex] = useState(null);
+
+  const handleRowClick = (index) => {
+    if (index === expandedSaleIndex) {
+      setExpandedSaleIndex(null);
+      return;
+    } else {
+      setExpandedSaleIndex(index);
+    }
+  };
+  return (
+    <div className="content">
+      <div className="role-header">
+        <h1 className="role-title">YOU ARE A BUYER</h1>
+        <div className="buyer-icon"></div>
+      </div>
+      <h1 className="title">Open Book Sales</h1>
+      <div className="table" id="dim">
+        <ul className="table__header">
+          <li className="table__header-item optional">Presale</li>
+          <li className="table__header-item optional">Seller</li>
+          <li className="table__header-item">Price</li>
+          <li className="table__header-item">Status</li>
+          <li className="table__header-item optional">Action</li>
+        </ul>
+
+        {address ? (
+          <>
+            <div className="table__body">
+              {sales.filter((sale) => address !== sale.sellerAddress)
+                ?.length ? (
+                sales.map((sale, index) => (
+                  <ul
+                    className={
+                      index === expandedSaleIndex
+                        ? " table__row row-action--expanded"
+                        : "table__row action-hidden "
+                    }
+                    key={index}
+                  >
+                    <div
+                      className="table__row-details"
+                      key={sale}
+                      onClick={() => handleRowClick(index)}
+                    >
+                      <li className="table__body-item table-address optional">
+                        {truncateEthAddress(sale.presaleAddress)}
+                      </li>
+                      <li className="table__body-item optional">
+                        {truncateEthAddress(sale.sellerAddress)}
+                      </li>
+                      <li className="table__body-item">
+                        {(sale.price * 10 ** -18).toFixed(2)} BNB
+                      </li>
+                      {!sale.cancelled ? (
+                        sale.buyerAcceptedSaleAndSentBnbToContract ? (
+                          sale.moneySentToSellerByContract ? (
+                            <li className="table__body-item action tick">
+                              Success
+                            </li>
+                          ) : (
+                            <li className="table__body-item action ">
+                              Waiting For Seller
+                            </li>
+                          )
+                        ) : (
+                          <li className="table__body-item action ">
+                            Waiting For Buyer
+                          </li>
+                        )
+                      ) : (
+                        <li className="table__body-item action cross">
+                          Cancelled
+                        </li>
+                      )}
+
+                      <li className="show-row-action">
+                        <i className="burger"> </i>
+                      </li>
+                    </div>
+                    <SalesCard
+                      // refetchSales={fetchAndSetSales}
+                      sale={sale}
+                      isSeller={isSeller}
+                      refetchSales={refetch}
+                    />
+                  </ul>
+                ))
               ) : (
                 <h3
                   style={{
@@ -445,13 +445,10 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   const { isLoading: isCompletingSale } = useWaitForTransaction({
     hash: completeSaleTxData?.hash,
     onSuccess: () => {
+      showSuccess("Sale completed!");
       refetchSales();
     },
   });
-
-  const acceptSale = async () => {
-    await acceptSaleAsync();
-  };
 
   const {
     config: cancelSaleConfig,
@@ -493,19 +490,6 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
         refetchSales();
       },
     });
-
-  const completeSale = async (sellerAddress, presaleAddress, walletToAdd) => {
-    console.log(
-      `Completing sale for seller ${sellerAddress}, presale ${presaleAddress} and wallet ${walletToAdd}...`
-    );
-
-    try {
-      await completeSaleAsync();
-      showSuccess("Sale completed!");
-    } catch (e) {
-      console.log(e);
-    }
-  };
 
   const cancelSale = async () => {
     cancelSaleAsync();
@@ -595,13 +579,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                   <div>
                     <button
                       className="btn btn--primary"
-                      onClick={() => {
-                        completeSale(
-                          sale.sellerAddress,
-                          sale.presaleAddress,
-                          sale.buyerAddress
-                        );
-                      }}
+                      onClick={completeSaleAsync}
                       disabled={isCompletingSale || isCompleteSaleConfigError}
                       style={
                         isCompletingSale || isCompleteSaleConfigError
@@ -616,14 +594,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                     </button>
                     <button
                       className="btn btn--primary"
-                      onClick={() => {
-                        cancelSale(
-                          sale.sellerAddress,
-                          sale.presaleAddress,
-                          sale.buyerAddress,
-                          sale.buyerAcceptedTimestamp
-                        );
-                      }}
+                      onClick={cancelSaleAsync}
                       disabled={cancelTxLoading || isCancelSaleConfigError}
                       style={
                         cancelTxLoading || isCancelSaleConfigError
@@ -649,14 +620,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                 <div>
                   <button
                     className="btn btn--primary"
-                    onClick={() => {
-                      cancelSale(
-                        sale.sellerAddress,
-                        sale.presaleAddress,
-                        sale.buyerAddress,
-                        sale.buyerAcceptedTimestamp
-                      );
-                    }}
+                    onClick={cancelSaleAsync}
                     disabled={cancelTxLoading || isCancelSaleConfigError}
                     style={
                       cancelTxLoading || isCancelSaleConfigError
@@ -692,14 +656,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                 <span>Action</span>
                 <button
                   className="btn btn--primary"
-                  onClick={() => {
-                    cancelSale(
-                      sale.sellerAddress,
-                      sale.presaleAddress,
-                      sale.buyerAddress,
-                      sale.buyerAcceptedTimestamp
-                    );
-                  }}
+                  onClick={cancelSaleAsync}
                   disabled={cancelTxLoading || isCancelSaleConfigError}
                   style={
                     cancelTxLoading || isCancelSaleConfigError
@@ -721,11 +678,16 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                       Wait until presale starts!!!
                     </span>
                   ))}
-                {!isCancelSaleConfigError && (
-                  <span className="card__error">
-                    You can cancel within 5 minutes
-                  </span>
-                )}
+                {!isCancelSaleConfigError &&
+                  (Date.now() < sale.presaleStartTime * 1000 ? (
+                    <span className="card__error">
+                      You can cancel within 5 minutes
+                    </span>
+                  ) : (
+                    <span className="card__error">
+                      Your wallet hasn't been added, feel free to cancel
+                    </span>
+                  ))}
               </div>
             </>
           )
@@ -736,7 +698,7 @@ const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
               <button
                 className="btn btn--primary"
                 onClick={() => {
-                  acceptSale(
+                  acceptSaleAsync(
                     sale.sellerAddress,
                     sale.presaleAddress,
                     sale.price
