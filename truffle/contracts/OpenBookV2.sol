@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Version: 1.0.2
+// Version: 1.0.3
 pragma solidity >=0.4.22 <0.9.0;
 
 struct SaleInfo {
