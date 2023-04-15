@@ -259,7 +259,7 @@ export const ViewOpenBookSales = ({ usersAddress, isSeller = true }) => {
         {address ? (
           <>
             <div className="table__body">
-              {sales.filter((sale) => address !== sale.sellerAddress)
+              {sales?.filter((sale) => address !== sale.sellerAddress)
                 ?.length ? (
                 sales.map((sale, index) => (
                   <ul

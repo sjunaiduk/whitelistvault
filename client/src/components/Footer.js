@@ -17,7 +17,11 @@ export const Footer = () => {
             </li>
 
             <li className="footer__item">
-              <a href="https://t.me/whitelistvault" className="footer__link">
+              <a
+                href="https://t.me/whitelistvault"
+                className="footer__link"
+                target="_blank"
+              >
                 Telegram
               </a>
             </li>

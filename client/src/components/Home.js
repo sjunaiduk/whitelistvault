@@ -19,6 +19,11 @@ export const Home = ({ isUserSeller }) => {
               Whitelist Vault is a decentralized escrow service for buying and
               selling presale whitelist spots for crypto projects
             </h2>
+            <a
+              className="telegram-icon"
+              href="https://t.me/whitelistvault"
+              target="_blank"
+            ></a>
 
             {address ? (
               <>
