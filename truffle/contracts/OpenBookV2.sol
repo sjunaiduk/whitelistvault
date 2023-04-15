@@ -520,24 +520,22 @@ contract OpenBookV2 {
         sellerStats[sellersAddress].totalSalesPending--;
         sales[sellersAddress][saleIndex] = saleInfo;
 
-        if (totalOpenBookSales > 0) {
+        // are we cancelling an open book sale?
+        if (saleInfo.buyerAddress == address(0)) {
             totalOpenBookSales--;
-        }
-
-        if (totalPendingOpenBookSalesForSeller[saleInfo.sellerAddress] > 0) {
             totalPendingOpenBookSalesForSeller[saleInfo.sellerAddress]--;
-        }
+            if (
+                totalPendingOpenBookSalesForSeller[saleInfo.sellerAddress] == 0
+            ) {
+                for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
+                    if (sellersWithOpenBookSales[i] == saleInfo.sellerAddress) {
+                        uint256 lastIndex = sellersWithOpenBookSales.length - 1;
+                        sellersWithOpenBookSales[i] = sellersWithOpenBookSales[
+                            lastIndex
+                        ];
 
-        // remove seller from sellersWithOpenBookSales if he has any. We assume he does since he has some openBookSales.
-        if (totalPendingOpenBookSalesForSeller[saleInfo.sellerAddress] == 0) {
-            for (uint256 i = 0; i < sellersWithOpenBookSales.length; i++) {
-                if (sellersWithOpenBookSales[i] == saleInfo.sellerAddress) {
-                    uint256 lastIndex = sellersWithOpenBookSales.length - 1;
-                    sellersWithOpenBookSales[i] = sellersWithOpenBookSales[
-                        lastIndex
-                    ];
-
-                    sellersWithOpenBookSales.pop();
+                        sellersWithOpenBookSales.pop();
+                    }
                 }
             }
         }
