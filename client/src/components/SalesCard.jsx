@@ -2,8 +2,11 @@ import {
   usePrepareContractWrite,
   useContractWrite,
   useWaitForTransaction,
+  useNetwork,
 } from "wagmi";
-
+import { ethers } from "ethers";
+import escrowAbi from "../contracts/OpenBookV2.json";
+import { useEffect } from "react";
 export const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   const { chain } = useNetwork();
 
