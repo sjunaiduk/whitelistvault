@@ -824,7 +824,6 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .main-header {
   background: #00000080;
-  margin-bottom: 2rem;
   padding-top: 2rem;
   padding-top: 50px;
   padding-bottom: 2rem;
@@ -1104,4 +1103,8 @@ input[type="number"]::-webkit-outer-spin-button {
   justify-content: center;
   align-items: center;
   margin-block: 9rem 4rem;
+}
+
+.divider::after {
+  content: url("../images/divider.svg");
 }

@@ -10,7 +10,7 @@ export const Home = ({ isUserSeller }) => {
   const { address } = useAccount();
   return (
     <div className="content">
-      <section className="main-header block--skewed-left">
+      <section className="main-header">
         <div className="main-container hero-grid">
           <div className="main-header-text">
             <h1>Whitelist</h1>
@@ -48,6 +48,7 @@ export const Home = ({ isUserSeller }) => {
           </div>
         </div>
       </section>
+      <div className="divider"></div>
       <section className="home-body">
         <div className="main-container">
           <div className="main-features">
