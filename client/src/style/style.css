@@ -403,7 +403,7 @@ body {
   background: #00000043;
   border-radius: 20px;
   padding: 2rem;
-  border: 1px solid #ff5bca;
+  border: 1px solid #ff5fcb96;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.211);
   margin-bottom: 3rem;
   max-width: 760px;
@@ -670,7 +670,7 @@ body {
   overflow: auto;
   display: flex;
   flex-direction: column;
-  margin: 1rem auto;
+  margin: 4rem auto;
   max-width: fit-content;
   padding: 3rem;
 }
@@ -813,6 +813,10 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
+section {
+  padding-inline: 1rem;
+}
+
 @media screen and (min-width: 450px) {
   section {
     padding-inline: 3rem;
@@ -824,19 +828,22 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .main-header {
   background: #00000080;
-  padding-top: 2rem;
   padding-top: 50px;
   padding-bottom: 2rem;
 }
 
 @media screen and (min-width: 768px) {
   .main-header {
-    padding-top: 4rem;
+    padding-top: 8rem;
+    padding-bottom: 5rem;
   }
 }
-@media screen and (min-width: 1024px) {
+@media screen and (min-width: 1200px) {
   .main-header {
-    padding-top: 8rem;
+    padding-top: 10rem;
+  }
+  section {
+    padding-inline: 5rem;
   }
 }
 
