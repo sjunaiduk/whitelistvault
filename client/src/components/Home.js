@@ -115,7 +115,8 @@ export const Home = ({ isUserSeller }) => {
                 <p>
                   Once the buyer's wallet address is added, the seller can
                   complete the sale when the presale starts, and he will recieve
-                  the funds held by our escrow service.
+                  the funds held by our escrow service. We take a 5% fee before
+                  the funds are sent to the seller.
                 </p>
               </li>
               <li className="main-howitworks-list-item">

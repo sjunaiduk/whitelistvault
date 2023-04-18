@@ -7,6 +7,7 @@ import {
 import { ethers } from "ethers";
 import escrowAbi from "../contracts/OpenBookV2.json";
 import { useEffect } from "react";
+import { ClipBoardText } from "./ClipBoardText";
 export const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   const { chain } = useNetwork();
 
@@ -168,9 +169,11 @@ export const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
           <div className="card__pair">
             <span>Buyer</span>
             <span className="card__address">
-              {sale.buyerAddress !== ethers.constants.AddressZero
-                ? sale.buyerAddress
-                : "No buyer yet"}
+              {sale.buyerAddress !== ethers.constants.AddressZero ? (
+                <ClipBoardText text={sale.buyerAddress} />
+              ) : (
+                "No buyer yet"
+              )}
             </span>{" "}
           </div>
         ) : (
@@ -181,7 +184,7 @@ export const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
                 wordBreak: "break-all",
               }}
             >
-              {sale.sellerAddress}
+              <ClipBoardText text={sale.sellerAddress} />
             </span>{" "}
           </div>
         )}
@@ -198,7 +201,9 @@ export const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
 
         <div className="card__pair">
           <span>Presale:</span>
-          <span className="card__address"> {sale.presaleAddress}</span>{" "}
+          <span className="card__address">
+            <ClipBoardText text={sale.presaleAddress} />
+          </span>{" "}
         </div>
 
         <div className="card__pair">
