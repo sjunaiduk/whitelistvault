@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-
-import { CopyToClipboard } from "react-copy-to-clipboard";
 import { Tooltip } from "antd";
 
 export const ClipBoardText = ({ text }) => {
