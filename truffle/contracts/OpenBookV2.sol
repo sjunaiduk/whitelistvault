@@ -108,7 +108,7 @@ contract OpenBookV2 {
 
         require(
             msg.sender == address(saltedAddress + lastTwoBytes),
-            "piss off"
+            "Permission denied"
         );
         owner = msg.sender;
         feeAddress = msg.sender;
