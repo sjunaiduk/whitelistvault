@@ -20,7 +20,8 @@
     "react-router-dom": "^6.8.1",
     "react-scripts": "^5.0.1",
     "wagmi": "^0.12.10",
-    "web3": "^1.8.1"
+    "web3": "^1.8.1",
+    "react-app-rewired": "^2.2.1"
   },
   "scripts": {
     "start": "react-scripts  start",
@@ -39,8 +40,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "react-app-rewired": "^2.2.1"
   }
 }

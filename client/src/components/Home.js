@@ -93,6 +93,11 @@ export const Home = ({ isUserSeller }) => {
                   This information is stored on the blockchain and cannot be
                   tampered with.
                 </p>
+                <br />
+                <p>
+                  (We currently only support whitelisted pools which
+                  automatically add liquidity)
+                </p>
               </li>
               <li className="main-howitworks-list-item">
                 <h3>2. Buyer Accepts Sale</h3>

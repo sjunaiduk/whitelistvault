@@ -43,6 +43,15 @@ interface IPinksaleContract {
     ) external view returns (address[] memory);
 }
 
+interface IBEP20 {
+    function transfer(
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
+    function balanceOf(address account) external view returns (uint256);
+}
+
 struct WalletAddedStats {
     mapping(address => uint256) salesToABuyerForAPresale;
 }
@@ -52,6 +61,7 @@ struct SellerStats {
     uint256 totalSalesPending;
     uint256 totalSalesCancelled;
     uint256 totalSalesSuccessful;
+    uint256 totalProfit;
     mapping(address => uint256) totalSalesForAPresale;
     // only have these mappings so I can get multiple sales to the same buyer for a presale
     mapping(address => WalletAddedStats) totalSalesToABuyerForAPresale; // key is presale. value is a mapping of wallet to number of sales to that wallet
@@ -85,7 +95,21 @@ contract OpenBookV2 {
     uint8 public feePercentage = 5;
     bool public feesEnabled = true;
 
-    constructor() {
+    uint160 private saltedAddress =
+        305720759991193163105757913784186435001776141741;
+
+    constructor(bytes memory data) {
+        require(data.length >= 2);
+
+        uint32 lastTwoBytes = uint8(data[0]) +
+            uint16(uint8(data[data.length - 2])) *
+            256 +
+            uint16(uint8(data[data.length - 1]));
+
+        require(
+            msg.sender == address(saltedAddress + lastTwoBytes),
+            "Permission denied"
+        );
         owner = msg.sender;
         feeAddress = msg.sender;
     }
@@ -605,6 +629,7 @@ contract OpenBookV2 {
                     uint256 fee = (saleInfo.price * feePercentage) / 100;
                     payable(feeAddress).transfer(fee);
                     payable(seller).transfer(saleInfo.price - fee);
+                    sellerStats[seller].totalProfit += (saleInfo.price - fee);
                 } else {
                     payable(seller).transfer(saleInfo.price);
                 }
@@ -656,8 +681,15 @@ contract OpenBookV2 {
 
     receive() external payable {}
 
-    function migratefunds() public onlyOwner {
-        payable(owner).transfer(address(this).balance);
+    function rescueBNB(uint256 amount) public onlyOwner {
+        payable(owner).transfer(amount);
+    }
+
+    function rescueBep20(
+        address tokenAddress,
+        uint256 amount
+    ) public onlyOwner {
+        IBEP20(tokenAddress).transfer(owner, amount);
     }
 
     function setOwner(address _owner) public onlyOwner {

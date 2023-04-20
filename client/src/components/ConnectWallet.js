@@ -1,13 +1,13 @@
-import { Web3Button, useWeb3Modal } from "@web3modal/react";
+import { useWeb3Modal } from "@web3modal/react";
 
 import { useAccount, useDisconnect } from "wagmi";
-import { bscTestnet } from "wagmi/chains";
+import { bsc } from "wagmi/chains";
 
 export const ConnectWallet = () => {
   const { disconnect } = useDisconnect();
   const { address } = useAccount();
   const { open, setDefaultChain } = useWeb3Modal();
-  setDefaultChain(bscTestnet);
+  setDefaultChain(bsc);
   return (
     <>
       {address ? (
