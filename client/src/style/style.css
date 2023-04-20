@@ -215,16 +215,16 @@ body {
   display: flex;
   flex-direction: column;
   background-color: rgb(30 29 29 / 42%);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(13px);
   /* border-bottom: 2px solid #fe4bc6; */
   position: fixed;
-  top: 52px;
+  top: 50px;
   left: 0;
   height: 100vh;
   z-index: 99;
   width: 0;
   overflow: hidden;
-  transition: width 0.4s ease-in-out;
+  transition: width 0.2s ease-in-out;
 }
 
 .navbar-new__items {
