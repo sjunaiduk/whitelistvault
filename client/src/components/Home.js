@@ -125,12 +125,12 @@ export const Home = ({ isUserSeller }) => {
                 </p>
               </li>
               <li className="main-howitworks-list-item">
-                <h3>5. Cancelation Policy</h3>
+                <h3>5. Cancellation Policy</h3>
                 <p>
                   Buyers can cancel within 5 minutes of accepting the sale for a
                   full refund. After that, they can only cancel if their wallet
-                  address is not added by the seller by the time presale
-                  starts.. Sellers can cancel at any time.
+                  address is not added by the seller by the time presale starts.
+                  Sellers can cancel at any time.
                 </p>
               </li>
             </ul>
