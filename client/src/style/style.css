@@ -814,6 +814,12 @@ input[type="number"]::-webkit-outer-spin-button {
   opacity: 0.8;
 }
 
+@media screen and (min-width: 300px) {
+  .main-header-text h2 {
+    margin-bottom: 3.5rem;
+  }
+}
+
 .main-container {
   margin: 0 auto;
   max-width: 1400px;
