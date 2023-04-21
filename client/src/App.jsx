@@ -12,7 +12,6 @@ import {
 
 import "./style/normalize.css";
 import "./style/style.css";
-import { useWeb3Modal } from "@web3modal/react";
 
 function App() {
   const { address } = useAccount();
