@@ -8,6 +8,15 @@ import { ethers } from "ethers";
 import escrowAbi from "../contracts/OpenBookV2.json";
 import { useEffect } from "react";
 import { ClipBoardText } from "./ClipBoardText";
+import { message } from "antd";
+
+const showSuccess = (msg) => {
+  message.success({
+    content: msg,
+    duration: 3,
+  });
+};
+
 export const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
   const { chain } = useNetwork();
 
@@ -156,10 +165,6 @@ export const SalesCard = ({ sale, isSeller = true, refetchSales }) => {
         refetchSales();
       },
     });
-
-  const cancelSale = async () => {
-    cancelSaleAsync();
-  };
 
   return (
     <div className="card table__row-action">
