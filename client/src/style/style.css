@@ -215,7 +215,7 @@ body {
   display: flex;
   flex-direction: column;
   background-color: rgb(30 29 29 / 42%);
-  backdrop-filter: blur(13px);
+  backdrop-filter: blur(10px);
   /* border-bottom: 2px solid #fe4bc6; */
   position: fixed;
   top: 50px;
@@ -274,6 +274,7 @@ body {
   position: fixed;
   padding: 0.5rem;
   z-index: 999;
+  backdrop-filter: blur(10px);
 }
 
 .navbar-new__filler-nav .btn {
