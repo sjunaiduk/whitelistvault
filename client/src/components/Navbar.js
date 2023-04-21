@@ -40,37 +40,27 @@ export const NavBar = ({ switchTheSeller, isUserSeller }) => {
         </div>
 
         <ul className="navbar-new__items">
-          <li className="navbar-new__item">
-            <Link to="/" className="navbar__link">
-              Home
-            </Link>
-          </li>
+          <Link to="/" className="navbar__link">
+            <li className="navbar-new__item">Home</li>
+          </Link>
           {address ? (
             isUserSeller ? (
               <>
-                <li className="navbar-new__item">
-                  <Link to="/createSale" className="navbar__link">
-                    Create Sale
-                  </Link>
-                </li>
-                <li className="navbar-new__item">
-                  <Link to="/sales" className="navbar__link">
-                    Seller Sales
-                  </Link>
-                </li>
+                <Link to="/createSale" className="navbar__link">
+                  <li className="navbar-new__item">Create Sale</li>
+                </Link>
+                <Link to="/sales" className="navbar__link">
+                  <li className="navbar-new__item">Seller Sales</li>
+                </Link>
               </>
             ) : (
               <>
-                <li className="navbar-new__item">
-                  <Link to="/openBookSales" className="navbar__link">
-                    Openbook sales
-                  </Link>
-                </li>
-                <li className="navbar-new__item">
-                  <Link to="/sales" className="navbar__link">
-                    Purchases
-                  </Link>
-                </li>
+                <Link to="/openBookSales" className="navbar__link">
+                  <li className="navbar-new__item">Openbook sales</li>
+                </Link>
+                <Link to="/sales" className="navbar__link">
+                  <li className="navbar-new__item">Purchases</li>
+                </Link>
               </>
             )
           ) : null}
