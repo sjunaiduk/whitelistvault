@@ -1,24 +1,24 @@
 import { useWeb3Modal } from "@web3modal/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { useAccount, useDisconnect, useConnect } from "wagmi";
 import { bsc } from "wagmi/chains";
 
+var logged = false;
+
 export const ConnectWallet = () => {
   const { disconnect } = useDisconnect();
-  const { address } = useAccount();
-  const { isSuccess } = useConnect();
+  const { address, status } = useAccount();
   const { open, setDefaultChain } = useWeb3Modal();
   setDefaultChain(bsc);
 
   useEffect(() => {
-    if (isSuccess) {
-      window.dataLayer.push({
-        event: "userWallet",
-        user_id: address,
-      });
+    if (status === "connected" && !logged) {
+      console.log("connected");
+      logged = true;
+      window.dataLayer.push({ event: "user_id", userWallet: address });
     }
-  }, [isSuccess]);
+  }, [status]);
 
   return (
     <>
@@ -27,7 +27,10 @@ export const ConnectWallet = () => {
           <button
             className="btn btn--primary"
             type="button"
-            onClick={disconnect}
+            onClick={() => {
+              disconnect();
+              logged = false;
+            }}
           >
             Logout
           </button>
