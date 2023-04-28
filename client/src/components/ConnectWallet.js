@@ -16,7 +16,11 @@ export const ConnectWallet = () => {
     if (status === "connected" && !logged) {
       console.log("connected");
       logged = true;
-      window.dataLayer.push({ event: "user_connected", userWallet: address });
+      window.dataLayer.push({
+        event: "user_connected",
+        userWallet: "W: ",
+        address,
+      });
     }
   }, [status]);
 
