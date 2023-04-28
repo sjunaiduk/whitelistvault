@@ -18,8 +18,7 @@ export const ConnectWallet = () => {
       logged = true;
       window.dataLayer.push({
         event: "user_connected",
-        userWallet: "W: ",
-        address,
+        userWallet: "W: " + address,
       });
     }
   }, [status]);
